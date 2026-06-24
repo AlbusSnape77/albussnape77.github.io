@@ -63,7 +63,7 @@ const CONTENT = {
         zh: "一个 Windows 桌面工具：用 OCR 自动识别《三角洲行动》的结算画面，把你的对局战绩整理成清爽的数据面板。",
       },
       icon: "🎯",
-      tags: ["Windows", "v1.6", "OCR", "Free"],
+      tags: ["Delta Force", "v1.7", "OCR", "Free"],
       download: "https://github.com/AlbusSnape77/Delta-Force-Stats/releases/download/v1.7/-v1.7.zip",
       source: "https://github.com/AlbusSnape77/Delta-Force-Stats",
     },
