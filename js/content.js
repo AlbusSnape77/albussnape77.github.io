@@ -113,7 +113,7 @@ const CONTENT = {
       },
       icon: "🎯",
       tags: ["Windows", "v1.6", "OCR", "Free"],
-      download: "https://github.com/AlbusSnape77/Delta-Force-Stats/releases",
+      download: "https://github.com/AlbusSnape77/Delta-Force-Stats/releases/download/v1.6/DeltaForceStats-v1.6.zip",
       source: "https://github.com/AlbusSnape77/Delta-Force-Stats",
     },
     {
