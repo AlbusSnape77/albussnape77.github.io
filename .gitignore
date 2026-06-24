@@ -1,6 +1,3 @@
-# OS / editor junk
 .DS_Store
 Thumbs.db
 desktop.ini
-
-# Local preview helper (not needed for the live site)

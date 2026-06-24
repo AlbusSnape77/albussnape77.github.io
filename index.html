@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Homepage</title>
-  <meta name="description" content="A cozy little corner of the internet — about me, my GitHub, and the things I make." />
+  <title>Albus Snape</title>
+  <meta name="description" content="Albus Snape's homepage — about me, my GitHub, and the tools I build." />
 
-  <!-- Rounded + handwritten fonts give it that warm, hand-made anime feel (not a corporate sans) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Yusei+Magic&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
@@ -15,7 +14,6 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>" />
 </head>
 <body>
-  <!-- Opening effect: a music note pops with sparkles, then lifts to reveal the page -->
   <div class="splash" id="splash" aria-hidden="true">
     <span class="splash-spark sp1">✦</span>
     <span class="splash-spark sp2">✧</span>
@@ -25,7 +23,6 @@
     <div class="splash-sub">ようこそ</div>
   </div>
 
-  <!-- Soft dawn sky + drifting clouds -->
   <div class="bg-sky" aria-hidden="true">
     <span class="cloud cloud-1"></span>
     <span class="cloud cloud-2"></span>
@@ -33,13 +30,9 @@
     <span class="hill"></span>
   </div>
 
-  <!-- Music notes & petals floating up (filled by app.js) -->
   <div class="notes" id="notes" aria-hidden="true"></div>
-
-  <!-- Danmaku: gentle quotes drifting across (filled by app.js) -->
   <div class="floating-words" id="floatingWords" aria-hidden="true"></div>
 
-  <!-- Top bar: cute tabs + language toggle -->
   <header class="topbar">
     <nav class="nav-pill" id="navPill" aria-label="Primary"></nav>
     <button class="lang-toggle" id="langToggle" type="button" aria-label="Switch language"></button>
@@ -53,8 +46,7 @@
 
   <footer class="site-footer" id="siteFooter"></footer>
 
-  <!-- Chibi 後藤ひとり (CSS art) peeking in the corner — click her to reshuffle colours. -->
-  <button class="mascot" id="mascot" type="button" aria-label="後藤ひとり — tap to change colours">
+  <button class="mascot" id="mascot" type="button" aria-label="Change theme colour">
     <span class="bk-bubble">ど、どうも…</span>
     <span class="bocchi">
       <span class="bk-hair-back"></span>

@@ -1,7 +1,6 @@
 (function () {
   "use strict";
 
-  /* ---- Inline SVG icons (no external icon library needed) -------------- */
   const icons = {
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.2 12 3l9 7.2"/><path d="M5 9v11h5v-6h4v6h5V9"/></svg>',
     apps: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg>',
@@ -17,15 +16,11 @@
     sparkle: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.5 3.6 1.9 5 5.5 5.5-3.6.5-5 1.9-5.5 5.5-.5-3.6-1.9-5-5.5-5.5C10.1 7 11.5 5.6 12 2z"/><path d="M19 13c.3 1.9 1 2.6 2.9 2.9-1.9.3-2.6 1-2.9 2.9-.3-1.9-1-2.6-2.9-2.9C18 15.6 18.7 14.9 19 13z"/></svg>',
   };
 
-  /* ---- Language ------------------------------------------------------- */
   let lang = localStorage.getItem("lang") || "en";
-  // t(): pick the right language out of a { en, zh } object (or pass through plain values)
   const t = (v) =>
     v && typeof v === "object" && !Array.isArray(v) ? (v[lang] != null ? v[lang] : v.en) : v;
-  // ui(): fixed interface strings that aren't in content.js
   const ui = (en, zh) => (lang === "zh" ? zh : en);
 
-  /* ---- The three views ------------------------------------------------ */
   const VIEWS = [
     { id: "home", icon: "home", label: { en: "Home", zh: "主页" } },
     { id: "software", icon: "apps", label: { en: "Software", zh: "软件" } },
@@ -33,7 +28,6 @@
   ];
   let current = "home";
 
-  /* ---- Tiny helpers --------------------------------------------------- */
   const $ = (s) => document.querySelector(s);
   const el = (tag, cls, html) => {
     const e = document.createElement(tag);
@@ -46,7 +40,6 @@
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
     );
 
-  /* ---- Navigation ----------------------------------------------------- */
   function renderNav() {
     const nav = $("#navPill");
     nav.innerHTML = "";
@@ -70,7 +63,6 @@
     ind.style.transform = "translateX(" + active.offsetLeft + "px)";
   }
 
-  /* ---- Home / hero ---------------------------------------------------- */
   function renderHome() {
     const p = CONTENT.profile;
     const v = $("#view-home");
@@ -94,17 +86,16 @@
     hero.querySelector('[data-go="software"]').addEventListener("click", () => switchView("software"));
   }
 
-  /* ---- Software cards ------------------------------------------------- */
   function renderIcon(icon) {
     if (!icon) return "📦";
     if (/\.(png|jpe?g|svg|gif|webp)$/i.test(icon) || icon.indexOf("/") !== -1)
       return '<img src="' + esc(icon) + '" alt="" />';
-    return esc(icon); // emoji / text
+    return esc(icon);
   }
   function dlAttrs(url) {
     if (!url || url === "#") return "";
     if (/^https?:/i.test(url)) return ' target="_blank" rel="noopener"';
-    return " download"; // local file in assets/
+    return " download";
   }
   function renderSoftware() {
     const v = $("#view-software");
@@ -112,7 +103,6 @@
     let cards = list
       .map((s) => {
         const tags = (s.tags || []).map((tg) => '<span class="tag">' + esc(tg) + "</span>").join("");
-        // Web demos get a "Live demo" button; everything else gets "Download".
         const dl = s.live
           ? '<a class="btn btn-primary" href="' + esc(s.live) + '" target="_blank" rel="noopener">' +
             icons.play + "<span>" + ui("Live demo", "在线体验") + "</span></a>"
@@ -137,7 +127,7 @@
     if (!list.length)
       cards =
         '<p style="grid-column:1/-1;text-align:center;color:var(--ink-soft)">' +
-        ui("No software yet — add some in js/content.js", "还没有软件，去 js/content.js 里添加吧") +
+        ui("Nothing here yet.", "暂时还没有内容。") +
         "</p>";
     v.innerHTML =
       '<div class="section-head"><h2>' + ui("Software", "软件作品") + "</h2><p>" +
@@ -146,7 +136,6 @@
       '<div class="card-grid">' + cards + "</div>";
   }
 
-  /* ---- About ---------------------------------------------------------- */
   function avatarInner(p) {
     if (p.avatar) return '<img src="' + esc(p.avatar) + '" alt="' + esc(t(p.name)) + '" />';
     const name = (t(p.name) || "Me").trim();
@@ -182,7 +171,6 @@
       "</div>";
   }
 
-  /* ---- Footer --------------------------------------------------------- */
   function renderFooter() {
     const p = CONTENT.profile;
     $("#siteFooter").innerHTML =
@@ -196,7 +184,6 @@
         ui("Made with", "用") + ' <span class="heart">♥</span></div>';
   }
 
-  /* ---- Floating decorative words -------------------------------------- */
   function renderFloatingWords() {
     const box = $("#floatingWords");
     box.innerHTML = "";
@@ -206,15 +193,14 @@
     const lanes = words.length;
     words.forEach((w, i) => {
       const span = el("span", "floating-word");
-      const inner = el("span", "fw-inner"); // inner does the gentle vertical bob
+      const inner = el("span", "fw-inner");
       inner.textContent = w;
       inner.style.color = colors[i % colors.length];
       inner.style.setProperty("--bdur", (2.2 + Math.random() * 1.8).toFixed(1) + "s");
       inner.style.setProperty("--bdelay", (-rand(0, 3)).toFixed(1) + "s");
       span.appendChild(inner);
-      // Each quote gets its OWN evenly-spaced lane, so two never share a row → no collisions.
       span.style.top = (lanes > 1 ? 9 + (82 * i) / (lanes - 1) : 50).toFixed(1) + "%";
-      const dur = rand(8, 15); // seconds to cross the screen (smaller = faster)
+      const dur = rand(8, 15);
       span.style.setProperty("--dur", dur.toFixed(1) + "s");
       span.style.setProperty("--delay", (-rand(0, dur)).toFixed(1) + "s");
       box.appendChild(span);
@@ -225,7 +211,6 @@
     });
   }
 
-  /* ---- Music notes & petals drifting gently upward -------------------- */
   function renderNotes() {
     const box = $("#notes");
     if (!box) return;
@@ -248,7 +233,6 @@
     }
   }
 
-  /* ---- Mascot: use a custom image if one is set in content.js --------- */
   function renderMascot() {
     const m = $("#mascot");
     if (!m) return;
@@ -257,10 +241,8 @@
       m.innerHTML =
         '<span class="bk-bubble">ど、どうも…</span>' +
         '<img class="mascot-img" src="' + esc(img) + '" alt="mascot" />';
-    // else: keep the built-in CSS chibi that's already in index.html
   }
 
-  /* ---- Scroll reveal: animate elements in as they scroll into view ---- */
   let _io = null;
   function observeReveals() {
     if (!("IntersectionObserver" in window)) {
@@ -278,7 +260,6 @@
     document.querySelectorAll(".reveal:not(.in)").forEach((e) => _io.observe(e));
   }
 
-  /* ---- Copy QQ / WeChat to clipboard, with a tiny toast --------------- */
   function copyVal(text) {
     const done = () => toast((lang === "zh" ? "已复制：" : "Copied: ") + text);
     if (navigator.clipboard && navigator.clipboard.writeText)
@@ -300,7 +281,6 @@
     toast._h = setTimeout(() => t.classList.remove("show"), 1700);
   }
 
-  /* ---- View switching ------------------------------------------------- */
   function switchView(id, instant) {
     if (!VIEWS.some((v) => v.id === id)) id = "home";
     current = id;
@@ -313,13 +293,11 @@
     moveIndicator();
     if (!instant) history.replaceState(null, "", "#" + id);
     $("#siteFooter").style.display = id === "home" ? "none" : "block";
-    // Floating keywords belong to the hero only — keep content pages clean.
     $("#floatingWords").style.display = id === "home" ? "block" : "none";
     window.scrollTo({ top: 0, behavior: instant ? "auto" : "smooth" });
     requestAnimationFrame(observeReveals);
   }
 
-  /* ---- Language toggle ------------------------------------------------ */
   function renderLangToggle() {
     $("#langToggle").innerHTML =
       '<span class="' + (lang === "en" ? "on" : "") + '">EN</span>' +
@@ -333,11 +311,9 @@
     renderAll();
   }
 
-  /* ---- Theme shuffle (bottom-left button) ----------------------------- */
   function shuffleTheme() {
-    // Reshuffle within Bocchi's pink ↔ cyan family (lavender hue 280 bridges them).
-    const ph = 322 + Math.random() * 28; // pink/magenta 322–350
-    const ch = 176 + Math.random() * 28; // cyan 176–204
+    const ph = 322 + Math.random() * 28;
+    const ch = 176 + Math.random() * 28;
     const r = document.documentElement.style;
     r.setProperty("--pink", "hsl(" + ph.toFixed(0) + " 100% 78%)");
     r.setProperty("--pink-deep", "hsl(" + ph.toFixed(0) + " 72% 66%)");
@@ -347,7 +323,6 @@
     r.setProperty("--grad-soft", "linear-gradient(120deg,hsl(" + ph.toFixed(0) + " 100% 95%),hsl(280 70% 96%),hsl(" + ch.toFixed(0) + " 70% 95%))");
   }
 
-  /* ---- Re-render everything (used on language change) ------------------ */
   function renderAll() {
     document.title = t(CONTENT.site.title);
     const meta = document.querySelector('meta[name="description"]');
@@ -361,7 +336,6 @@
     switchView(current, true);
   }
 
-  /* ---- Init ----------------------------------------------------------- */
   function init() {
     document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
     $("#fabTop").innerHTML = icons.arrowUp;
@@ -389,7 +363,6 @@
     const hash = (location.hash || "").replace("#", "");
     switchView(VIEWS.some((v) => v.id === hash) ? hash : "home", true);
 
-    // Play the opening splash, then reveal the page (hero staggers in via body.entered).
     setTimeout(function () {
       document.body.classList.add("entered");
       const splash = $("#splash");
