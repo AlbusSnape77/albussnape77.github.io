@@ -16,10 +16,20 @@
     sparkle: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.5 3.6 1.9 5 5.5 5.5-3.6.5-5 1.9-5.5 5.5-.5-3.6-1.9-5-5.5-5.5C10.1 7 11.5 5.6 12 2z"/><path d="M19 13c.3 1.9 1 2.6 2.9 2.9-1.9.3-2.6 1-2.9 2.9-.3-1.9-1-2.6-2.9-2.9C18 15.6 18.7 14.9 19 13z"/></svg>',
   };
 
+  const LANGS = ["en", "zh", "ja"];
+  const LANG_LABEL = { en: "EN", zh: "中", ja: "日" };
+  const LANG_HTML = { en: "en", zh: "zh-CN", ja: "ja" };
   let lang = localStorage.getItem("lang") || "en";
+  if (!LANGS.includes(lang)) lang = "en";
   const t = (v) =>
-    v && typeof v === "object" && !Array.isArray(v) ? (v[lang] != null ? v[lang] : v.en) : v;
-  const ui = (en, zh) => (lang === "zh" ? zh : en);
+    v && typeof v === "object" && !Array.isArray(v)
+      ? (v[lang] != null && v[lang] !== "" ? v[lang] : v.en)
+      : v;
+  const ui = (en) => {
+    const e = CONTENT.ui && CONTENT.ui[en];
+    const val = e && e[lang];
+    return val != null && val !== "" ? val : en;
+  };
 
   const VIEWS = [
     { id: "home", icon: "home", label: { en: "Home", zh: "主页" } },
@@ -261,7 +271,7 @@
   }
 
   function copyVal(text) {
-    const done = () => toast((lang === "zh" ? "已复制：" : "Copied: ") + text);
+    const done = () => toast(ui("Copied: ") + text);
     if (navigator.clipboard && navigator.clipboard.writeText)
       navigator.clipboard.writeText(text).then(done, () => legacyCopy(text, done));
     else legacyCopy(text, done);
@@ -279,6 +289,91 @@
     t.textContent = msg; t.classList.add("show");
     clearTimeout(toast._h);
     toast._h = setTimeout(() => t.classList.remove("show"), 1700);
+  }
+
+  // ===== 点击特效 & 点击互动反应 =====
+  const FX_GLYPHS = ["♪", "♫", "♩", "♬", "🎵", "🎶", "🌸", "✿", "❀", "💕"];
+  const FX_COLORS = ["#ef6c97", "#3aa9bd", "#b07fd0", "#ff8fb4", "#4ab8c9", "#c98fd6", "#ffd36e", "#7ed957"];
+  function spawnRipple(x, y) {
+    const r = el("span", "fx-ripple");
+    r.style.left = x + "px";
+    r.style.top = y + "px";
+    document.body.appendChild(r);
+    r.addEventListener("animationend", () => r.remove());
+  }
+  function spawnFx(x, y, n) {
+    n = n || 10;
+    for (let i = 0; i < n; i++) {
+      const s = el("span", "fx");
+      s.textContent = FX_GLYPHS[(Math.random() * FX_GLYPHS.length) | 0];
+      s.style.left = x + "px";
+      s.style.top = y + "px";
+      s.style.color = FX_COLORS[(Math.random() * FX_COLORS.length) | 0];
+      s.style.fontSize = (14 + Math.random() * 22).toFixed(0) + "px";
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 50 + Math.random() * 110;
+      s.style.setProperty("--dx", (Math.cos(ang) * dist).toFixed(0) + "px");
+      s.style.setProperty("--dy", (Math.sin(ang) * dist - (30 + Math.random() * 55)).toFixed(0) + "px");
+      s.style.setProperty("--rot", ((Math.random() * 2 - 1) * 220).toFixed(0) + "deg");
+      s.style.animationDuration = (0.8 + Math.random() * 0.7).toFixed(2) + "s";
+      document.body.appendChild(s);
+      s.addEventListener("animationend", () => s.remove());
+    }
+  }
+  function clickFx(x, y) {
+    spawnRipple(x, y);
+    spawnFx(x, y);
+  }
+  const TRAIL_GLYPHS = ["🌸", "🌸", "🌸", "🌸", "✿", "✿", "❀", "❀", "🌸", "♪", "♫", "💕"];
+  function spawnTrail(x, y) {
+    const s = el("span", "fx-trail");
+    s.textContent = TRAIL_GLYPHS[(Math.random() * TRAIL_GLYPHS.length) | 0];
+    s.style.left = x + "px";
+    s.style.top = y + "px";
+    s.style.color = FX_COLORS[(Math.random() * FX_COLORS.length) | 0];
+    s.style.fontSize = (12 + Math.random() * 10).toFixed(0) + "px";
+    s.style.setProperty("--tx", ((Math.random() * 2 - 1) * 24).toFixed(0) + "px");
+    document.body.appendChild(s);
+    s.addEventListener("animationend", () => s.remove());
+  }
+  let _lastTrail = 0;
+  function trailMove(e) {
+    const now = Date.now();
+    if (now - _lastTrail < 50) return;
+    _lastTrail = now;
+    spawnTrail(e.clientX, e.clientY);
+  }
+  function randomLine() {
+    const w = CONTENT.floatingWords || [];
+    return w.length ? w[(Math.random() * w.length) | 0] : "♪";
+  }
+  function burstAround(node, n) {
+    const r = node.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    spawnRipple(cx, cy);
+    spawnFx(cx, cy, n || 13);
+  }
+  function reactAvatar(av) {
+    av.classList.remove("react"); void av.offsetWidth; av.classList.add("react");
+    let b = av.querySelector(".avatar-bubble");
+    if (!b) { b = el("span", "avatar-bubble"); av.appendChild(b); }
+    b.textContent = randomLine();
+    b.classList.add("show");
+    clearTimeout(reactAvatar._h);
+    reactAvatar._h = setTimeout(() => b.classList.remove("show"), 2200);
+    burstAround(av, 12);
+  }
+  function reactMascot(ms) {
+    const img = ms.querySelector(".mascot-img") || ms;
+    img.classList.remove("react"); void img.offsetWidth; img.classList.add("react");
+    const bub = ms.querySelector(".bk-bubble");
+    if (bub) {
+      bub.textContent = randomLine();
+      bub.classList.add("show");
+      clearTimeout(reactMascot._h);
+      reactMascot._h = setTimeout(() => bub.classList.remove("show"), 2200);
+    }
+    burstAround(ms, 12);
   }
 
   function switchView(id, instant) {
@@ -299,16 +394,25 @@
   }
 
   function renderLangToggle() {
-    $("#langToggle").innerHTML =
-      '<span class="' + (lang === "en" ? "on" : "") + '">EN</span>' +
-      '<span style="opacity:.4">/</span>' +
-      '<span class="' + (lang === "zh" ? "on" : "") + '">中</span>';
+    $("#langToggle").innerHTML = LANGS
+      .map(function (l, i) {
+        return (i ? '<span style="opacity:.4">/</span>' : "") +
+          '<span class="' + (lang === l ? "on" : "") + '" data-lang="' + l + '">' +
+          LANG_LABEL[l] + "</span>";
+      })
+      .join("");
   }
-  function toggleLang() {
-    lang = lang === "en" ? "zh" : "en";
+  function setLang(l) {
+    if (!LANGS.includes(l)) l = "en";
+    lang = l;
     localStorage.setItem("lang", lang);
-    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+    document.documentElement.lang = LANG_HTML[lang];
     renderAll();
+  }
+  function toggleLang(e) {
+    const seg = e && e.target && e.target.closest && e.target.closest("[data-lang]");
+    if (seg) { setLang(seg.getAttribute("data-lang")); return; }
+    setLang(LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length]);
   }
 
   function shuffleTheme() {
@@ -337,7 +441,7 @@
   }
 
   function init() {
-    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+    document.documentElement.lang = LANG_HTML[lang];
     $("#fabTop").innerHTML = icons.arrowUp;
     $("#langToggle").addEventListener("click", toggleLang);
     const mascot = $("#mascot");
@@ -346,7 +450,13 @@
     document.addEventListener("click", (e) => {
       const c = e.target.closest("[data-copy]");
       if (c) copyVal(c.getAttribute("data-copy"));
+      clickFx(e.clientX, e.clientY);
+      const av = e.target.closest(".avatar");
+      if (av) reactAvatar(av);
+      const ms = e.target.closest("#mascot");
+      if (ms) reactMascot(ms);
     });
+    document.addEventListener("mousemove", trailMove);
     window.addEventListener("scroll", () =>
       $("#fabTop").classList.toggle("show", window.scrollY > 320)
     );
