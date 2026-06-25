@@ -292,8 +292,8 @@
   }
 
   // ===== 点击特效 & 点击互动反应 =====
-  const FX_GLYPHS = ["♪", "♫", "♩", "♬", "🎵", "🎶", "🌸", "✿", "❀", "💕"];
-  const FX_COLORS = ["#ef6c97", "#3aa9bd", "#b07fd0", "#ff8fb4", "#4ab8c9", "#c98fd6", "#ffd36e", "#7ed957"];
+  const FX_GLYPHS = ["♪", "♫", "♩", "♬", "🎵", "🎶", "🌸", "✿", "❀"];
+  const FX_COLORS = ["#ffc0d6", "#ffb3cd", "#f7a8c4", "#ffd2e4", "#f4bcd8"];
   function spawnRipple(x, y) {
     const r = el("span", "fx-ripple");
     r.style.left = x + "px";
@@ -302,7 +302,7 @@
     r.addEventListener("animationend", () => r.remove());
   }
   function spawnFx(x, y, n) {
-    n = n || 10;
+    n = n || 8;
     for (let i = 0; i < n; i++) {
       const s = el("span", "fx");
       s.textContent = FX_GLYPHS[(Math.random() * FX_GLYPHS.length) | 0];
@@ -324,24 +324,95 @@
     spawnRipple(x, y);
     spawnFx(x, y);
   }
-  const TRAIL_GLYPHS = ["🌸", "🌸", "🌸", "🌸", "✿", "✿", "❀", "❀", "🌸", "♪", "♫", "💕"];
-  function spawnTrail(x, y) {
-    const s = el("span", "fx-trail");
-    s.textContent = TRAIL_GLYPHS[(Math.random() * TRAIL_GLYPHS.length) | 0];
-    s.style.left = x + "px";
-    s.style.top = y + "px";
-    s.style.color = FX_COLORS[(Math.random() * FX_COLORS.length) | 0];
-    s.style.fontSize = (12 + Math.random() * 10).toFixed(0) + "px";
-    s.style.setProperty("--tx", ((Math.random() * 2 - 1) * 24).toFixed(0) + "px");
-    document.body.appendChild(s);
-    s.addEventListener("animationend", () => s.remove());
-  }
-  let _lastTrail = 0;
-  function trailMove(e) {
-    const now = Date.now();
-    if (now - _lastTrail < 50) return;
-    _lastTrail = now;
-    spawnTrail(e.clientX, e.clientY);
+  // 鼠标跟随：一条粉色丝带线跟着光标，线两侧洒落粉色樱花（canvas 绘制，更明显）
+  function initTrail() {
+    const cv = document.createElement("canvas");
+    cv.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9996;";
+    document.body.appendChild(cv);
+    const ctx = cv.getContext("2d");
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = window.innerWidth * dpr;
+      cv.height = window.innerHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    const N = 22, pts = [], petals = [];
+    const PINK = ["#ffc2dd", "#ffd2e8", "#ffb8d8", "#ffcce0", "#ffaecf"];
+    let mouse = null, running = false;
+
+    function onMove(x, y) {
+      const prev = mouse || { x: x, y: y };
+      if (!mouse) { mouse = { x: x, y: y }; for (let i = 0; i < N; i++) pts.push({ x: x, y: y }); }
+      mouse = { x: x, y: y };
+      const dx = x - prev.x, dy = y - prev.y, len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len, ny = dx / len;                 // 线的垂直方向
+      const count = Math.min(3, 1 + ((len / 16) | 0));
+      for (let i = 0; i < count && petals.length < 260; i++) {
+        const side = Math.random() < 0.5 ? 1 : -1;         // 两侧
+        const spd = 0.5 + Math.random() * 1.1;             // 更轻柔
+        petals.push({
+          x: x, y: y,
+          vx: nx * side * spd + (Math.random() - 0.5) * 0.4,
+          vy: ny * side * spd * 0.5 + Math.random() * 0.4,
+          rot: Math.random() * 6.28, vrot: (Math.random() - 0.5) * 0.2,
+          size: 4 + Math.random() * 4.5, color: PINK[(Math.random() * PINK.length) | 0],
+          life: 1, decay: 0.006 + Math.random() * 0.005,
+        });
+      }
+      if (!running) { running = true; requestAnimationFrame(frame); }
+    }
+    document.addEventListener("mousemove", function (e) { onMove(e.clientX, e.clientY); });
+    document.addEventListener("touchmove", function (e) {       // 手机：手指滑动也有
+      if (e.touches && e.touches[0]) onMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+
+    function petal(x, y, s, rot, a, color) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+      ctx.globalAlpha = a; ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, -s);
+      ctx.bezierCurveTo(s * 0.78, -s * 0.35, s * 0.55, s * 0.72, 0, s);
+      ctx.bezierCurveTo(-s * 0.55, s * 0.72, -s * 0.78, -s * 0.35, 0, -s);
+      ctx.fill(); ctx.restore();
+    }
+
+    function frame() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      if (mouse) {
+        pts[0].x += (mouse.x - pts[0].x) * 0.42;
+        pts[0].y += (mouse.y - pts[0].y) * 0.42;
+        for (let i = 1; i < N; i++) {
+          pts[i].x += (pts[i - 1].x - pts[i].x) * 0.42;
+          pts[i].y += (pts[i - 1].y - pts[i].y) * 0.42;
+        }
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.shadowBlur = 7;
+        ctx.shadowColor = "rgba(255, 186, 216, 0.5)";
+        for (let i = 1; i < N; i++) {
+          const t = i / N;
+          ctx.beginPath();
+          ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
+          ctx.lineTo(pts[i].x, pts[i].y);
+          ctx.lineWidth = 7 * (1 - t) + 1;
+          ctx.strokeStyle = "hsla(" + (338 + t * 16).toFixed(0) + ", 88%, 80%, " + (0.5 * (1 - t)).toFixed(3) + ")";
+          ctx.stroke();
+        }
+        ctx.shadowBlur = 0;
+      }
+      for (let i = petals.length - 1; i >= 0; i--) {
+        const p = petals[i];
+        p.vy += 0.03; p.x += p.vx; p.y += p.vy; p.rot += p.vrot; p.life -= p.decay;
+        if (p.life <= 0) { petals.splice(i, 1); continue; }
+        petal(p.x, p.y, p.size, p.rot, Math.max(0, p.life) * 0.82, p.color);
+      }
+      ctx.globalAlpha = 1;
+      const busy = petals.length > 0 || (mouse && Math.hypot(pts[N - 1].x - mouse.x, pts[N - 1].y - mouse.y) > 0.6);
+      if (busy) requestAnimationFrame(frame); else running = false;
+    }
   }
   function randomLine() {
     const w = CONTENT.floatingWords || [];
@@ -351,7 +422,7 @@
     const r = node.getBoundingClientRect();
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     spawnRipple(cx, cy);
-    spawnFx(cx, cy, n || 13);
+    spawnFx(cx, cy, n || 10);
   }
   function reactAvatar(av) {
     av.classList.remove("react"); void av.offsetWidth; av.classList.add("react");
@@ -387,7 +458,7 @@
     );
     moveIndicator();
     if (!instant) history.replaceState(null, "", "#" + id);
-    $("#siteFooter").style.display = id === "home" ? "none" : "block";
+    $("#siteFooter").style.display = "block";
     $("#floatingWords").style.display = id === "home" ? "block" : "none";
     window.scrollTo({ top: 0, behavior: instant ? "auto" : "smooth" });
     requestAnimationFrame(observeReveals);
@@ -427,6 +498,27 @@
     r.setProperty("--grad-soft", "linear-gradient(120deg,hsl(" + ph.toFixed(0) + " 100% 95%),hsl(280 70% 96%),hsl(" + ch.toFixed(0) + " 70% 95%))");
   }
 
+  // 滚动时背景随之"平滑渐变"：滚动只更新目标色相，实际色相用缓动慢慢逼近，
+  // 所以哪怕一下滑到底，背景也是顺滑地过渡而不是硬切。
+  let _bgTarget = 0, _bgCur = 0, _bgRAF = 0;
+  function setBgHue(h) {
+    document.body.style.backgroundImage =
+      "linear-gradient(180deg, hsl(" + (195 + h).toFixed(1) + " 70% 94%) 0%, hsl(" +
+      (320 + h).toFixed(1) + " 78% 95%) 50%, hsl(" + (340 + h).toFixed(1) + " 85% 93%) 100%)";
+  }
+  function _bgLoop() {
+    _bgCur += (_bgTarget - _bgCur) * 0.07;
+    if (Math.abs(_bgTarget - _bgCur) < 0.1) _bgCur = _bgTarget;
+    setBgHue(_bgCur);
+    _bgRAF = _bgCur === _bgTarget ? 0 : requestAnimationFrame(_bgLoop);
+  }
+  function scrollBg() {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    _bgTarget = p * 110;
+    if (!_bgRAF) _bgRAF = requestAnimationFrame(_bgLoop);
+  }
+
   function renderAll() {
     document.title = t(CONTENT.site.title);
     const meta = document.querySelector('meta[name="description"]');
@@ -456,10 +548,12 @@
       const ms = e.target.closest("#mascot");
       if (ms) reactMascot(ms);
     });
-    document.addEventListener("mousemove", trailMove);
+    initTrail();
     window.addEventListener("scroll", () =>
       $("#fabTop").classList.toggle("show", window.scrollY > 320)
     );
+    window.addEventListener("scroll", scrollBg, { passive: true });
+    scrollBg();
     window.addEventListener("resize", moveIndicator);
     window.addEventListener("hashchange", () => {
       const h = (location.hash || "").replace("#", "");
