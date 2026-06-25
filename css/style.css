@@ -124,10 +124,10 @@ img { max-width: 100%; display: block; }
   display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
   text-align: center; padding-top: 6vh; padding-bottom: 40px; position: relative; }
 .hero .greeting {
-  font-family: "Yusei Magic", sans-serif; font-size: 1.2rem; color: var(--cyan-deep);
+  font-family: "Yusei Magic", "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 1.2rem; color: var(--cyan-deep);
   margin: 0 0 4px; transform: rotate(-2deg); }
 .hero .name {
-  font-family: "Yusei Magic", "M PLUS Rounded 1c", sans-serif;
+  font-family: "Yusei Magic", "M PLUS Rounded 1c", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: clamp(3rem, 11vw, 6.6rem); font-weight: 400; line-height: 1.08; margin: 4px 0 0;
   background: var(--grad); background-size: 280% 280%;
   -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -163,7 +163,7 @@ img { max-width: 100%; display: block; }
 
 .section-head { text-align: center; margin: 6px 0 36px; }
 .section-head h2 {
-  display: inline-block; font-family: "Yusei Magic", sans-serif; font-weight: 400;
+  display: inline-block; font-family: "Yusei Magic", "PingFang SC", "Microsoft YaHei", sans-serif; font-weight: 400;
   font-size: clamp(1.9rem, 4vw, 2.7rem); margin: 0 0 6px; color: var(--ink);
   padding-bottom: 10px; background: var(--wave) repeat-x bottom; background-size: 36px 8px;
 }
@@ -207,7 +207,7 @@ img { max-width: 100%; display: block; }
 }
 .avatar {
   position: relative; width: 116px; height: 116px; border-radius: 50%; margin: 0 auto 18px;
-  display: grid; place-items: center; font-family: "Yusei Magic", sans-serif; font-size: 2.4rem; color: #fff;
+  display: grid; place-items: center; font-family: "Yusei Magic", "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 2.4rem; color: #fff;
   background: var(--grad); background-size: 200% 200%; animation: hueShift 14s ease infinite;
   box-shadow: 0 8px 0 rgba(239, 108, 151, 0.35), 0 16px 26px rgba(239, 108, 151, 0.3); overflow: visible;
   border: 4px solid #fff; box-sizing: border-box; cursor: pointer;
@@ -232,7 +232,7 @@ img { max-width: 100%; display: block; }
   transition: background 0.18s, transform 0.18s, border-color 0.18s; }
 .profile-links a:hover, .profile-links .plink:hover { background: var(--grad-soft); transform: translateY(-2px) rotate(-1deg); border-color: #fff; }
 .profile-links svg { width: 19px; height: 19px; }
-.about-body h3 { font-family: "Yusei Magic", sans-serif; font-weight: 400; font-size: 1.4rem; margin: 4px 0 12px;
+.about-body h3 { font-family: "Yusei Magic", "PingFang SC", "Microsoft YaHei", sans-serif; font-weight: 400; font-size: 1.4rem; margin: 4px 0 12px;
   display: inline-block; padding-bottom: 8px; background: var(--wave) repeat-x bottom; background-size: 34px 8px; }
 .about-body p { color: var(--ink-soft); margin: 0 0 16px; font-weight: 500; }
 .skills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
@@ -320,7 +320,7 @@ img { max-width: 100%; display: block; }
 .splash-mark { font-size: 4.6rem; line-height: 1; color: var(--pink-deep);
   text-shadow: 0 6px 0 rgba(255, 175, 200, 0.5);
   animation: splashPop 1s cubic-bezier(0.2, 0.85, 0.25, 1) both; }
-.splash-sub { position: absolute; margin-top: 150px; font-family: "Yusei Magic", sans-serif;
+.splash-sub { position: absolute; margin-top: 150px; font-family: "Yusei Magic", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 1.2rem; color: var(--cyan-deep); opacity: 0; animation: subIn 0.6s ease 0.45s forwards; }
 .splash-spark { position: absolute; color: var(--cyan); font-size: 1.5rem; opacity: 0;
   animation: sparkPop 1s ease both; }
