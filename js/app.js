@@ -14,6 +14,8 @@
     code: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 9-4 3 4 3"/><path d="m16 9 4 3-4 3"/></svg>',
     arrowUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V5"/><path d="m6 11 6-6 6 6"/></svg>',
     sparkle: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.5 3.6 1.9 5 5.5 5.5-3.6.5-5 1.9-5.5 5.5-.5-3.6-1.9-5-5.5-5.5C10.1 7 11.5 5.6 12 2z"/><path d="M19 13c.3 1.9 1 2.6 2.9 2.9-1.9.3-2.6 1-2.9 2.9-.3-1.9-1-2.6-2.9-2.9C18 15.6 18.7 14.9 19 13z"/></svg>',
+    book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19"/></svg>',
+    sakura: '<svg viewBox="0 0 24 24" fill="none"><g fill="#ff8fb4"><path d="M12 12C9 10 9 5 10.7 3.4 11.3 4.1 12.7 4.1 13.3 3.4 15 5 15 10 12 12Z"/><path d="M12 12C9 10 9 5 10.7 3.4 11.3 4.1 12.7 4.1 13.3 3.4 15 5 15 10 12 12Z" transform="rotate(72 12 12)"/><path d="M12 12C9 10 9 5 10.7 3.4 11.3 4.1 12.7 4.1 13.3 3.4 15 5 15 10 12 12Z" transform="rotate(144 12 12)"/><path d="M12 12C9 10 9 5 10.7 3.4 11.3 4.1 12.7 4.1 13.3 3.4 15 5 15 10 12 12Z" transform="rotate(216 12 12)"/><path d="M12 12C9 10 9 5 10.7 3.4 11.3 4.1 12.7 4.1 13.3 3.4 15 5 15 10 12 12Z" transform="rotate(288 12 12)"/></g><circle cx="12" cy="12" r="2.1" fill="#ef6c97"/></svg>',
   };
 
   const LANGS = ["en", "zh", "ja"];
@@ -34,6 +36,7 @@
   const VIEWS = [
     { id: "home", icon: "home", label: { en: "Home", zh: "主页" } },
     { id: "software", icon: "apps", label: { en: "Software", zh: "软件" } },
+    { id: "diary", icon: "book", label: { en: "Diary", zh: "日记" } },
     { id: "about", icon: "user", label: { en: "About", zh: "关于" } },
   ];
   let current = "home";
@@ -49,6 +52,17 @@
     String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
     );
+
+  const ls = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+  let danmakuOn = ls("pp_danmaku", "1") === "1";
+  let gardenOn = ls("pp_garden", "0") === "1";
+  let darkOn = ls("pp_dark", "0") === "1";
+  let toolOpen = false;
+  let diaryPublished = [], diaryLocal = [], diaryLoaded = false;
+  const motionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  const reduceMotion = () => motionQuery && motionQuery.matches;
 
   function renderNav() {
     const nav = $("#navPill");
@@ -77,6 +91,32 @@
     const p = CONTENT.profile;
     const v = $("#view-home");
     v.innerHTML = "";
+    const bigWord = CONTENT.site && CONTENT.site.welcome ? t(CONTENT.site.welcome) : "Welcome";
+    const subText = CONTENT.site && CONTENT.site.welcomeSub ? t(CONTENT.site.welcomeSub) : "";
+    const WCOLORS = ["#ff7eb3", "#6fd0df", "#c3a0f0", "#ffb347", "#ff9ec4", "#7cc6d6", "#b07fd0"];
+    let letters = "";
+    Array.from(bigWord).forEach(function (ch, i) {
+      if (ch === " ") { letters += '<span class="wl wl-sp"></span>'; return; }
+      letters += '<span class="wl" style="color:' + WCOLORS[i % WCOLORS.length] +
+        ";animation-delay:" + (i * 0.09).toFixed(2) + 's">' + esc(ch) + "</span>";
+    });
+    const subHtml = subText
+      ? '<p class="welcome-sub">' + esc(subText).replace("pphome", '<span class="wb-brand">pphome</span>') + "</p>"
+      : "";
+    const deco =
+      '<span class="wdeco wd1">✦</span><span class="wdeco wd2">🌸</span>' +
+      '<span class="wdeco wd3">✿</span><span class="wdeco wd4">✦</span><span class="wdeco wd5">🌸</span>';
+    const intro = el("section", "welcome-screen");
+    intro.innerHTML =
+      '<div class="welcome-inner">' + deco +
+        '<h1 class="welcome-big">' + letters + "</h1>" + subHtml +
+      "</div>" +
+      '<button class="scroll-cue" type="button" aria-label="' + ui("Scroll down") + '">' +
+        '<span class="scroll-cue-text">' + ui("Scroll down") + "</span>" +
+        '<span class="scroll-cue-arrow">⌄</span>' +
+      "</button>";
+    v.appendChild(intro);
+
     const hero = el("div", "hero");
     hero.innerHTML =
       '<p class="greeting">' + esc(t(p.greeting)) + "</p>" +
@@ -94,6 +134,8 @@
         : "");
     v.appendChild(hero);
     hero.querySelector('[data-go="software"]').addEventListener("click", () => switchView("software"));
+    const cue = intro.querySelector(".scroll-cue");
+    if (cue) cue.addEventListener("click", () => hero.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   function renderIcon(icon) {
@@ -190,8 +232,42 @@
         (p.qq ? '<button type="button" data-copy="' + esc(p.qq) + '" aria-label="QQ ' + esc(p.qq) + '" title="QQ ' + esc(p.qq) + '">' + icons.qq + "</button>" : "") +
         (p.wechat ? '<button type="button" data-copy="' + esc(p.wechat) + '" aria-label="WeChat ' + esc(p.wechat) + '" title="' + ui("WeChat ", "微信 ") + esc(p.wechat) + '">' + icons.wechat + "</button>" : "") +
       "</div>" +
-      "<div>© " + new Date().getFullYear() + " " + esc(t(p.name)) + " · " +
+      "<div>© " + new Date().getFullYear() + " " + esc(t(CONTENT.site.title)) + " · " +
         ui("Made with", "用") + ' <span class="heart">♥</span></div>';
+  }
+
+  function renderBocchiBackdrop() {
+    const sky = $(".bg-sky");
+    if (!sky || sky.querySelector(".bocchi-backdrop")) return;
+    const wrap = el("div", "bocchi-backdrop");
+    wrap.innerHTML =
+      '<span class="stage-spotlight spotlight-l"></span>' +
+      '<span class="stage-spotlight spotlight-c"></span>' +
+      '<span class="stage-spotlight spotlight-r"></span>' +
+      '<img class="bocchi-sticker sticker-main" src="pics/bocchi3.webp" alt="" aria-hidden="true" />' +
+      '<img class="bocchi-sticker sticker-side" src="pics/bocchi2.webp" alt="" aria-hidden="true" />' +
+      '<span class="amp-grid"></span>' +
+      '<span class="bocchi-cube cube-1"></span>' +
+      '<span class="bocchi-cube is-yellow cube-2"></span>' +
+      '<span class="bocchi-cube cube-3"></span>' +
+      '<span class="bocchi-cube is-yellow cube-4"></span>';
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const pickMap = [
+      [7, 18], [18, 68], [31, 25], [44, 82], [58, 13],
+      [67, 70], [77, 36], [86, 88], [24, 48], [53, 55],
+    ];
+    pickMap.forEach((pos, i) => {
+      const pick = el("span", "bocchi-pick" + (i % 3 === 1 ? " is-cyan" : ""));
+      pick.style.left = "calc(" + pos[1] + "% - 18px)";
+      pick.style.top = "calc(" + pos[0] + "% - 18px)";
+      pick.style.setProperty("--psize", rand(24, 44).toFixed(0) + "px");
+      pick.style.setProperty("--prot", ((Math.random() < 0.5 ? -1 : 1) * rand(7, 28)).toFixed(1) + "deg");
+      pick.style.setProperty("--pdur", rand(4.4, 8.2).toFixed(1) + "s");
+      pick.style.setProperty("--pdelay", (-rand(0, 8)).toFixed(1) + "s");
+      pick.style.setProperty("--pop", rand(0.42, 0.76).toFixed(2));
+      wrap.appendChild(pick);
+    });
+    sky.insertBefore(wrap, sky.firstChild);
   }
 
   function renderFloatingWords() {
@@ -225,20 +301,21 @@
     const box = $("#notes");
     if (!box) return;
     box.innerHTML = "";
-    const glyphs = ["♪", "♫", "♩", "♬", "✦", "❀"];
-    const colors = ["#ff9ec4", "#7fd0df", "#c3b6ee", "#ff8fb4", "#9fe0ea", "#e7a6dd"];
+    const glyphs = ["♪", "♫", "♩", "♬", "✦", "❀", "🎸"];
+    const colors = ["#ff9ec4", "#7fd0df", "#c3b6ee", "#ff8fb4", "#9fe0ea", "#e7a6dd", "#ef6c97"];
     const rand = (a, b) => a + Math.random() * (b - a);
-    for (let k = 0; k < 16; k++) {
-      const s = el("span", "note");
+    for (let k = 0; k < 24; k++) {
+      const s = el("span", "note " + (k % 3 === 0 ? "note-beat" : "note-soft"));
       s.textContent = glyphs[k % glyphs.length];
       s.style.left = rand(1, 98).toFixed(1) + "%";
       s.style.color = colors[k % colors.length];
-      s.style.fontSize = rand(0.9, 2).toFixed(2) + "rem";
-      s.style.setProperty("--ndur", rand(12, 24).toFixed(1) + "s");
-      s.style.setProperty("--ndelay", (-rand(0, 22)).toFixed(1) + "s");
-      s.style.setProperty("--nsway", ((Math.random() < 0.5 ? -1 : 1) * rand(20, 60)).toFixed(0) + "px");
-      s.style.setProperty("--nrot", ((Math.random() < 0.5 ? -1 : 1) * rand(15, 45)).toFixed(0) + "deg");
-      s.style.setProperty("--nop", rand(0.35, 0.7).toFixed(2));
+      s.style.fontSize = rand(0.72, 1.85).toFixed(2) + "rem";
+      s.style.setProperty("--ndur", rand(7, 15).toFixed(1) + "s");
+      s.style.setProperty("--ndelay", (-rand(0, 15)).toFixed(1) + "s");
+      s.style.setProperty("--nsway", ((Math.random() < 0.5 ? -1 : 1) * rand(44, 128)).toFixed(0) + "px");
+      s.style.setProperty("--nrot", ((Math.random() < 0.5 ? -1 : 1) * rand(38, 108)).toFixed(0) + "deg");
+      s.style.setProperty("--nop", rand(0.34, 0.76).toFixed(2));
+      s.style.setProperty("--nscale", rand(0.86, 1.18).toFixed(2));
       box.appendChild(s);
     }
   }
@@ -459,7 +536,8 @@
     moveIndicator();
     if (!instant) history.replaceState(null, "", "#" + id);
     $("#siteFooter").style.display = "block";
-    $("#floatingWords").style.display = id === "home" ? "block" : "none";
+    applyDanmaku(id);
+    if (id === "home" && !instant) setTimeout(launchFireworks, 250);
     window.scrollTo({ top: 0, behavior: instant ? "auto" : "smooth" });
     requestAnimationFrame(observeReveals);
   }
@@ -500,8 +578,13 @@
 
   // 滚动时背景随之"平滑渐变"：滚动只更新目标色相，实际色相用缓动慢慢逼近，
   // 所以哪怕一下滑到底，背景也是顺滑地过渡而不是硬切。
-  let _bgTarget = 0, _bgCur = 0, _bgRAF = 0;
+  let _bgTarget = 0, _bgCur = 0, _bgRAF = 0, _scrollP = 0, _scrollWave = 0, _motionRAF = 0, _motionEls = null;
   function setBgHue(h) {
+    if (document.body.classList.contains("dark")) {
+      document.body.style.backgroundImage =
+        "linear-gradient(180deg, #1b1626 0%, #241d2e 50%, #2b2030 100%)";
+      return;
+    }
     document.body.style.backgroundImage =
       "linear-gradient(180deg, hsl(" + (195 + h).toFixed(1) + " 70% 94%) 0%, hsl(" +
       (320 + h).toFixed(1) + " 78% 95%) 50%, hsl(" + (340 + h).toFixed(1) + " 85% 93%) 100%)";
@@ -512,11 +595,497 @@
     setBgHue(_bgCur);
     _bgRAF = _bgCur === _bgTarget ? 0 : requestAnimationFrame(_bgLoop);
   }
-  function scrollBg() {
+  function scrollBg(y) {
     const max = document.documentElement.scrollHeight - window.innerHeight;
-    const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    const top = y == null ? window.scrollY : y;
+    const p = max > 0 ? Math.min(1, Math.max(0, top / max)) : 0;
+    const wave = Math.sin(p * Math.PI * 2);
+    _scrollP = p;
+    _scrollWave = wave;
+    const root = document.documentElement;
+    root.style.setProperty("--scroll-progress", p.toFixed(4));
+    root.style.setProperty("--scroll-dot", (p * 100).toFixed(1) + "%");
+    root.style.setProperty("--amp-glow", (0.18 + p * 0.16).toFixed(3));
     _bgTarget = p * 110;
     if (!_bgRAF) _bgRAF = requestAnimationFrame(_bgLoop);
+  }
+
+  function motionEls() {
+    if (!_motionEls || !_motionEls.sky || !_motionEls.sky.isConnected) {
+      _motionEls = {
+        sky: $(".bg-sky"),
+        backdrop: $(".bocchi-backdrop"),
+        notes: $("#notes"),
+        garden: $("#garden"),
+        words: $("#floatingWords"),
+      };
+    }
+    return _motionEls;
+  }
+  function applyBackdropMotion(now) {
+    const els = motionEls();
+    const t = now / 1000;
+    const soft = reduceMotion() ? 0.82 : 1.25;
+    const swayA = Math.sin(t * 0.9);
+    const swayB = Math.cos(t * 0.66 + 0.7);
+    const bounce = Math.sin(t * 1.55 + 0.3);
+    const mix = _scrollWave * 0.18 + swayA * 0.9 + swayB * 0.46;
+    const skyX = mix * 20 * soft;
+    const skyY = -18 * _scrollP + swayB * 10 * soft;
+    const notesX = -mix * 30 * soft;
+    const notesY = -34 * _scrollP;
+    const gardenX = mix * 25 * soft;
+    const gardenY = 24 * _scrollP;
+    const wordsX = -mix * 22 * soft;
+    const wordsY = -22 * _scrollP;
+    const drift = Math.sin(t * 0.42 + _scrollP * Math.PI) * 0.65 + mix * 0.35;
+    const backdropX = drift * 18 * soft;
+    const backdropY = bounce * 8 * soft;
+    const backdropRot = mix * 1.8 * soft;
+    if (els.sky) els.sky.style.transform = "translate3d(" + skyX.toFixed(2) + "px," + skyY.toFixed(2) + "px,0)";
+    if (els.notes) els.notes.style.transform = "translate3d(" + notesX.toFixed(2) + "px," + notesY.toFixed(2) + "px,0)";
+    if (els.garden) els.garden.style.transform = "translate3d(" + gardenX.toFixed(2) + "px," + gardenY.toFixed(2) + "px,0)";
+    if (els.words) els.words.style.transform = "translate3d(" + wordsX.toFixed(2) + "px," + wordsY.toFixed(2) + "px,0)";
+    if (els.backdrop) els.backdrop.style.transform = "translate3d(" + backdropX.toFixed(2) + "px," + backdropY.toFixed(2) + "px,0) rotate(" + backdropRot.toFixed(2) + "deg)";
+  }
+  function backdropMotionFrame(now) {
+    applyBackdropMotion(now);
+    _motionRAF = requestAnimationFrame(backdropMotionFrame);
+  }
+  function startBackdropMotion() {
+    if (!_motionRAF) _motionRAF = requestAnimationFrame(backdropMotionFrame);
+  }
+
+  let _scrollLastY = null, _scrollSparkAt = 0, _scrollIdle = 0;
+  function ensureScrollProgress() {
+    if ($("#scrollProgress")) return;
+    const bar = el("div", "scroll-progress");
+    bar.id = "scrollProgress";
+    bar.setAttribute("aria-hidden", "true");
+    bar.innerHTML =
+      '<span class="scroll-progress-track"><span class="scroll-progress-fill"></span></span>' +
+      '<span class="scroll-progress-dot"></span>';
+    document.body.appendChild(bar);
+  }
+  function spawnScrollSpark(dir) {
+    if (reduceMotion()) return;
+    const now = performance.now();
+    if (now - _scrollSparkAt < 85) return;
+    _scrollSparkAt = now;
+    const glyphs = ["✦", "♡", "♪", "✿"];
+    const colors = ["#ef6c97", "#3aa9bd", "#b07fd0", "#ff8fb4"];
+    const count = 1 + ((Math.random() * 2) | 0);
+    for (let i = 0; i < count; i++) {
+      const s = el("span", "scroll-spark");
+      s.textContent = glyphs[(Math.random() * glyphs.length) | 0];
+      const side = Math.random() < 0.5 ? 1 : -1;
+      const x = side > 0 ? window.innerWidth - (26 + Math.random() * 78) : 26 + Math.random() * 78;
+      const y = dir > 0
+        ? window.innerHeight * (0.62 + Math.random() * 0.28)
+        : window.innerHeight * (0.12 + Math.random() * 0.26);
+      const drift = (side > 0 ? -1 : 1) * (28 + Math.random() * 34);
+      s.style.setProperty("--sx", x.toFixed(1) + "px");
+      s.style.setProperty("--sy", y.toFixed(1) + "px");
+      s.style.setProperty("--sdx", drift.toFixed(1) + "px");
+      s.style.setProperty("--sdy", (dir > 0 ? -58 - Math.random() * 28 : 48 + Math.random() * 28).toFixed(1) + "px");
+      s.style.setProperty("--srot", ((dir > 0 ? 1 : -1) * (70 + Math.random() * 90)).toFixed(1) + "deg");
+      s.style.setProperty("--ssize", (0.82 + Math.random() * 0.52).toFixed(2) + "rem");
+      s.style.setProperty("--scolor", colors[(Math.random() * colors.length) | 0]);
+      s.style.setProperty("--sdur", (0.72 + Math.random() * 0.32).toFixed(2) + "s");
+      document.body.appendChild(s);
+      s.addEventListener("animationend", () => s.remove(), { once: true });
+    }
+  }
+  function updateScrollPlay(y) {
+    if (_scrollLastY == null) _scrollLastY = y;
+    const dy = y - _scrollLastY;
+    const dir = dy > 0 ? 1 : dy < 0 ? -1 : 0;
+    if (dir) {
+      document.body.classList.add("is-scrolling");
+      document.body.classList.toggle("scrolling-down", dir > 0);
+      document.body.classList.toggle("scrolling-up", dir < 0);
+      document.documentElement.style.setProperty("--scroll-tilt", (Math.max(-12, Math.min(12, dy * 0.08))).toFixed(2) + "deg");
+      if (Math.abs(dy) > 4) spawnScrollSpark(dir);
+      clearTimeout(_scrollIdle);
+      _scrollIdle = setTimeout(() => {
+        document.body.classList.remove("is-scrolling", "scrolling-down", "scrolling-up");
+        document.documentElement.style.setProperty("--scroll-tilt", "0deg");
+      }, 150);
+    }
+    _scrollLastY = y;
+  }
+  function onScroll() {
+    const y = window.scrollY;
+    const top = $("#fabTop");
+    if (top) top.classList.toggle("show", y > 320);
+    scrollBg(y);
+    updateScrollPlay(y);
+  }
+
+  let _smoothTargetY = 0, _smoothCurrentY = 0, _smoothRAF = 0, _smoothIdle = 0;
+  function maxScrollY() {
+    return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  }
+  function clampScroll(y) {
+    return Math.max(0, Math.min(maxScrollY(), y));
+  }
+  function canScrollInside(target, deltaY) {
+    let node = target;
+    while (node && node !== document.body && node !== document.documentElement) {
+      if (node.nodeType !== 1) { node = node.parentNode; continue; }
+      const tag = (node.tagName || "").toLowerCase();
+      if (tag === "textarea" || tag === "select" || node.isContentEditable) return true;
+      const style = getComputedStyle(node);
+      const canY = /(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1;
+      if (canY) {
+        const top = node.scrollTop;
+        const max = node.scrollHeight - node.clientHeight;
+        if ((deltaY < 0 && top > 0) || (deltaY > 0 && top < max)) return true;
+      }
+      node = node.parentNode;
+    }
+    return false;
+  }
+  function smoothScrollFrame() {
+    const dist = _smoothTargetY - _smoothCurrentY;
+    const ease = Math.min(0.2, 0.09 + Math.abs(dist) / 5200);
+    _smoothCurrentY += dist * ease;
+    if (Math.abs(dist) < 0.55) _smoothCurrentY = _smoothTargetY;
+    window.scrollTo(0, _smoothCurrentY);
+    if (_smoothCurrentY !== _smoothTargetY) {
+      _smoothRAF = requestAnimationFrame(smoothScrollFrame);
+    } else {
+      _smoothRAF = 0;
+      clearTimeout(_smoothIdle);
+      _smoothIdle = setTimeout(() => document.body.classList.remove("wheel-glide"), 80);
+    }
+  }
+  function onWheel(e) {
+    if (e.ctrlKey || e.metaKey || e.defaultPrevented || canScrollInside(e.target, e.deltaY)) return;
+    const modeScale = e.deltaMode === 1 ? 42 : e.deltaMode === 2 ? window.innerHeight * 0.86 : 1;
+    const delta = e.deltaY * modeScale;
+    if (!delta) return;
+    e.preventDefault();
+    if (!_smoothRAF) _smoothCurrentY = window.scrollY;
+    _smoothTargetY = clampScroll((_smoothRAF ? _smoothTargetY : window.scrollY) + delta * 0.78);
+    document.body.classList.add("wheel-glide");
+    clearTimeout(_smoothIdle);
+    if (!_smoothRAF) _smoothRAF = requestAnimationFrame(smoothScrollFrame);
+  }
+
+  // ===== 右下角小功能：黑夜模式 / 飘浮花园 / 弹幕 / 烟花 =====
+  const TOOLS = [
+    { id: "dark", icon: "🌙", label: "Moonlight" },
+    { id: "garden", icon: "🌸", label: "Sakura" },
+    { id: "danmaku", icon: "💬", label: "Whispers" },
+    { id: "fireworks", icon: "🎆", label: "Fireworks" },
+  ];
+  function isToolOn(id) {
+    return id === "danmaku" ? danmakuOn : id === "garden" ? gardenOn : id === "dark" ? darkOn : false;
+  }
+  function renderToolMenu() {
+    const m = $("#toolMenu");
+    if (!m) return;
+    m.innerHTML = "";
+    TOOLS.forEach((tool, i) => {
+      const b = el("button", "tool-item" + (isToolOn(tool.id) ? " on" : ""));
+      b.type = "button";
+      b.dataset.tool = tool.id;
+      b.innerHTML =
+        '<span class="tool-label">' + esc(ui(tool.label)) + "</span>" +
+        '<span class="tool-ico">' + tool.icon + "</span>";
+      b.style.transitionDelay = (0.04 * (TOOLS.length - 1 - i)).toFixed(2) + "s";
+      m.appendChild(b);
+    });
+  }
+  function toggleToolMenu(force) {
+    toolOpen = force == null ? !toolOpen : !!force;
+    const m = $("#toolMenu"), l = $("#toolLauncher");
+    if (m) { m.classList.toggle("open", toolOpen); m.setAttribute("aria-hidden", toolOpen ? "false" : "true"); }
+    if (l) { l.classList.toggle("open", toolOpen); l.setAttribute("aria-expanded", toolOpen ? "true" : "false"); }
+  }
+  function onToolClick(id) {
+    if (id === "fireworks") {
+      launchFireworks();
+    } else if (id === "danmaku") {
+      danmakuOn = !danmakuOn; lsSet("pp_danmaku", danmakuOn ? "1" : "0"); applyDanmaku();
+    } else if (id === "garden") {
+      gardenOn = !gardenOn; lsSet("pp_garden", gardenOn ? "1" : "0"); renderGarden();
+    } else if (id === "dark") {
+      darkOn = !darkOn; lsSet("pp_dark", darkOn ? "1" : "0");
+      document.body.classList.toggle("dark", darkOn); setBgHue(_bgCur);
+    }
+    const btn = document.querySelector('#toolMenu [data-tool="' + id + '"]');
+    if (btn) btn.classList.toggle("on", isToolOn(id));
+  }
+  function applyDanmaku(view) {
+    const fw = $("#floatingWords");
+    if (fw) fw.style.display = danmakuOn && (view || current) === "home" ? "block" : "none";
+  }
+
+  // 飘浮花园：开启时洒落花瓣
+  function renderGarden() {
+    const box = $("#garden");
+    if (!box) return;
+    if (!gardenOn) { box.innerHTML = ""; return; }
+    if (box.childElementCount) return;
+    const flowers = ["🌸"];
+    const rand = (a, b) => a + Math.random() * (b - a);
+    for (let i = 0; i < 18; i++) {
+      const s = el("span", "petal-f");
+      s.textContent = flowers[i % flowers.length];
+      s.style.left = rand(0, 98).toFixed(1) + "%";
+      s.style.fontSize = rand(0.9, 1.9).toFixed(2) + "rem";
+      s.style.setProperty("--gdur", rand(11, 22).toFixed(1) + "s");
+      s.style.setProperty("--gdelay", (-rand(0, 20)).toFixed(1) + "s");
+      s.style.setProperty("--gsway", ((Math.random() < 0.5 ? -1 : 1) * rand(30, 80)).toFixed(0) + "px");
+      s.style.setProperty("--grot", ((Math.random() < 0.5 ? -1 : 1) * rand(180, 540)).toFixed(0) + "deg");
+      s.style.setProperty("--gop", rand(0.5, 0.85).toFixed(2));
+      box.appendChild(s);
+    }
+  }
+
+  // 放烟花：火箭升空 → 绽放，发光叠加 + 拖尾，更炫
+  let fwCanvas = null, fwCtx = null, fwParticles = [], fwRockets = [], fwRAF = 0;
+  function ensureFwCanvas() {
+    if (fwCanvas) return;
+    fwCanvas = document.createElement("canvas");
+    fwCanvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9995;";
+    document.body.appendChild(fwCanvas);
+    fwCtx = fwCanvas.getContext("2d");
+    fwResize();
+    window.addEventListener("resize", fwResize);
+  }
+  function fwResize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    fwCanvas.width = window.innerWidth * dpr;
+    fwCanvas.height = window.innerHeight * dpr;
+    fwCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function fwSpawnRocket() {
+    fwRockets.push({
+      x: window.innerWidth * (0.15 + Math.random() * 0.7),
+      y: window.innerHeight + 8,
+      vy: -(16 + Math.random() * 5),
+      targetY: window.innerHeight * (0.1 + Math.random() * 0.32),
+      hue: Math.random() * 360,
+      trail: [],
+    });
+    if (!fwRAF) fwRAF = requestAnimationFrame(fwFrame);
+  }
+  function fwBurst(x, y, hue) {
+    const ring = Math.random() < 0.5;
+    const n = 130 + ((Math.random() * 85) | 0);
+    for (let i = 0; i < n; i++) {
+      let ang, sp;
+      if (ring) { ang = (i / n) * Math.PI * 2; sp = 4.8 + Math.random() * 1.8; }
+      else { ang = Math.random() * Math.PI * 2; sp = 1.2 + Math.random() * 7.2; }
+      fwParticles.push({
+        x: x, y: y, px: x, py: y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+        life: 1, decay: 0.012 + Math.random() * 0.014,
+        hue: hue + (Math.random() * 50 - 25), size: 1.9 + Math.random() * 2.4,
+      });
+    }
+    // 二次闪烁的小星点
+    for (let i = 0; i < 28; i++) {
+      const ang = Math.random() * Math.PI * 2, sp = 0.6 + Math.random() * 2.8;
+      fwParticles.push({
+        x: x, y: y, px: x, py: y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+        life: 1, decay: 0.024 + Math.random() * 0.024, hue: hue, size: 3.4, twinkle: true,
+      });
+    }
+  }
+  function launchFireworks() {
+    ensureFwCanvas();
+    const shots = 7 + ((Math.random() * 4) | 0);
+    for (let s = 0; s < shots; s++) setTimeout(fwSpawnRocket, s * 95);
+  }
+  function fwFrame() {
+    fwCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    fwCtx.globalCompositeOperation = "lighter";
+    fwCtx.lineCap = "round";
+    // 火箭升空（带拖尾）
+    for (let i = fwRockets.length - 1; i >= 0; i--) {
+      const r = fwRockets[i];
+      r.trail.push({ x: r.x, y: r.y });
+      if (r.trail.length > 7) r.trail.shift();
+      r.y += r.vy; r.vy += 0.2;
+      if (r.vy >= -0.75 || r.y <= r.targetY) { fwBurst(r.x, r.y, r.hue); fwRockets.splice(i, 1); continue; }
+      for (let tt = 1; tt < r.trail.length; tt++) {
+        const a = tt / r.trail.length;
+        fwCtx.globalAlpha = a * 0.9;
+        fwCtx.strokeStyle = "hsl(" + (r.hue | 0) + ",90%,72%)";
+        fwCtx.lineWidth = a * 2.4;
+        fwCtx.beginPath();
+        fwCtx.moveTo(r.trail[tt - 1].x, r.trail[tt - 1].y);
+        fwCtx.lineTo(r.trail[tt].x, r.trail[tt].y);
+        fwCtx.stroke();
+      }
+    }
+    // 绽放粒子（短拖尾 + 重力）
+    for (let i = fwParticles.length - 1; i >= 0; i--) {
+      const p = fwParticles[i];
+      p.px = p.x; p.py = p.y;
+      p.vy += 0.045; p.vx *= 0.987; p.vy *= 0.987;
+      p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+      if (p.life <= 0) { fwParticles.splice(i, 1); continue; }
+      const lum = p.twinkle ? (55 + Math.random() * 35) : (58 + p.life * 14);
+      fwCtx.globalAlpha = Math.max(0, p.life);
+      fwCtx.strokeStyle = "hsl(" + (p.hue | 0) + ",100%," + (lum | 0) + "%)";
+      fwCtx.lineWidth = p.size * Math.max(0.35, p.life);
+      fwCtx.beginPath();
+      fwCtx.moveTo(p.px, p.py);
+      fwCtx.lineTo(p.x, p.y);
+      fwCtx.stroke();
+    }
+    fwCtx.globalAlpha = 1;
+    fwCtx.globalCompositeOperation = "source-over";
+    fwRAF = (fwRockets.length || fwParticles.length) ? requestAnimationFrame(fwFrame) : 0;
+  }
+
+  // ===== 日记 =====
+  const DIARY_KEY = "pp_diary_local";
+  const OWNER_KEY = "pp_diary_owner";
+  function isOwner() { return ls(OWNER_KEY, "0") === "1"; }
+  function diaryPad(n) { return (n < 10 ? "0" : "") + n; }
+  function loadDiary(cb) {
+    try { diaryLocal = JSON.parse(ls(DIARY_KEY, "[]")) || []; } catch (e) { diaryLocal = []; }
+    fetch("diary.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => { diaryPublished = Array.isArray(d) ? d : (d && d.entries) || []; diaryLoaded = true; cb && cb(); })
+      .catch(() => { diaryPublished = []; diaryLoaded = true; cb && cb(); });
+  }
+  function diaryAll() {
+    const map = {};
+    diaryPublished.forEach((e) => { map[e.id] = { id: e.id, date: e.date, title: e.title, text: e.text, _pub: true }; });
+    diaryLocal.forEach((e) => { if (!map[e.id]) map[e.id] = { id: e.id, date: e.date, title: e.title, text: e.text, _pub: false }; });
+    return Object.keys(map).map((k) => map[k]).sort((a, b) => b.id - a.id);
+  }
+  function diaryEntryHtml(e) {
+    const badge = e._pub ? "" : '<span class="d-badge">' + ui("Unpublished") + "</span>";
+    const title = e.title ? '<div class="d-title">' + esc(e.title) + "</div>" : "";
+    const del = !e._pub
+      ? '<button class="d-del" type="button" data-del="' + esc(e.id) + '">' + ui("Delete") + "</button>"
+      : "";
+    return (
+      '<article class="diary-entry"><div class="d-meta"><span class="d-date">' + esc(e.date || "") + "</span>" +
+      badge + del + "</div>" + title + '<div class="d-text">' + esc(e.text || "") + "</div></article>"
+    );
+  }
+  function diaryEditorHtml() {
+    return (
+      '<div class="diary-editor">' +
+        '<input id="diaryTitle" type="text" maxlength="80" placeholder="' + ui("Title (optional)") + '" />' +
+        '<textarea id="diaryText" placeholder="' + ui("Write something...") + '"></textarea>' +
+        '<div class="diary-actions">' +
+          '<button class="btn btn-primary" type="button" id="diarySave">' + ui("Save") + "</button>" +
+          '<button class="btn" type="button" id="diaryExport">' + ui("Export diary file") + "</button>" +
+        "</div>" +
+      "</div>"
+    );
+  }
+  function diaryPageHtml() {
+    const list = diaryAll();
+    const items = list.length
+      ? list.map(diaryEntryHtml).join("")
+      : '<p class="diary-empty">' + ui("No entries yet.") + "</p>";
+    return (
+      '<div class="section-head"><h2>' + ui("My diary") + "</h2><p>" +
+      ui("Little notes and everyday feelings.") + "</p></div>" +
+      '<div class="diary-page">' +
+        '<section class="diary-write reveal in">' + diaryEditorHtml() + "</section>" +
+        '<section class="diary-reading reveal in">' +
+          '<div class="diary-list">' + items + "</div>" +
+        "</section>" +
+      "</div>"
+    );
+  }
+  function renderDiaryPage() {
+    const view = $("#view-diary");
+    if (!view) return;
+    view.innerHTML = diaryPageHtml();
+  }
+  function renderDiary() {
+    const panel = $("#diaryModal .diary-panel");
+    if (!panel) return;
+    const list = diaryAll();
+    const items = list.length
+      ? list.map(diaryEntryHtml).join("")
+      : '<p class="diary-empty">' + ui("No entries yet.") + "</p>";
+    panel.innerHTML =
+      '<div class="diary-head"><h2>' + ui("My diary") + "</h2>" +
+        '<button class="diary-x" type="button" data-diary-close aria-label="' + ui("Close") + '">✕</button></div>' +
+      (isOwner() ? diaryEditorHtml() : "") +
+      '<div class="diary-list">' + items + "</div>";
+  }
+  function openDiary() {
+    const m = $("#diaryModal");
+    if (!m) return;
+    if (!diaryLoaded) loadDiary(function () { renderDiary(); });
+    renderDiary();
+    m.classList.add("open");
+    m.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+  function closeDiary() {
+    const m = $("#diaryModal");
+    if (!m || !m.classList.contains("open")) return;
+    m.classList.remove("open");
+    m.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+  function diarySave() {
+    const ta = $("#diaryText"), ti = $("#diaryTitle");
+    if (!ta) return;
+    const text = ta.value.trim();
+    if (!text) { ta.focus(); return; }
+    const now = new Date();
+    diaryLocal.unshift({
+      id: Date.now(),
+      date: now.getFullYear() + "-" + diaryPad(now.getMonth() + 1) + "-" + diaryPad(now.getDate()),
+      title: (ti && ti.value.trim()) || "",
+      text: text,
+    });
+    lsSet(DIARY_KEY, JSON.stringify(diaryLocal));
+    toast(ui("Saved locally"));
+    renderDiary();
+    renderDiaryPage();
+  }
+  function diaryDelete(id) {
+    diaryLocal = diaryLocal.filter(function (e) { return String(e.id) !== String(id); });
+    lsSet(DIARY_KEY, JSON.stringify(diaryLocal));
+    renderDiary();
+    renderDiaryPage();
+  }
+  function diaryExport() {
+    const list = diaryAll().map(function (e) {
+      return { id: e.id, date: e.date, title: e.title || "", text: e.text || "" };
+    });
+    const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = el("a");
+    a.href = url; a.download = "diary.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    toast(ui("Diary file downloaded."));
+  }
+  function onDiaryModalClick(e) {
+    if (e.target.closest("[data-diary-close]") || e.target.classList.contains("diary-backdrop")) { closeDiary(); return; }
+    if (e.target.closest("#diarySave")) { diarySave(); return; }
+    if (e.target.closest("#diaryExport")) { diaryExport(); return; }
+    const del = e.target.closest("[data-del]");
+    if (del) diaryDelete(del.getAttribute("data-del"));
+  }
+  function onDiaryPageClick(e) {
+    if (e.target.closest("#diarySave")) { diarySave(); return; }
+    if (e.target.closest("#diaryExport")) { diaryExport(); return; }
+    const del = e.target.closest("[data-del]");
+    if (del) diaryDelete(del.getAttribute("data-del"));
+  }
+  function onDiaryPageKeydown(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && e.target.closest("#view-diary")) {
+      diarySave();
+    }
   }
 
   function renderAll() {
@@ -528,7 +1097,9 @@
     renderHome();
     renderSoftware();
     renderAbout();
+    renderDiaryPage();
     renderFooter();
+    renderToolMenu();
     switchView(current, true);
   }
 
@@ -538,7 +1109,32 @@
     $("#langToggle").addEventListener("click", toggleLang);
     const mascot = $("#mascot");
     if (mascot) mascot.addEventListener("click", shuffleTheme);
+    ensureScrollProgress();
     $("#fabTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+    // 右下角功能坞
+    $("#toolLauncher").innerHTML = icons.sakura;
+    $("#toolLauncher").addEventListener("click", (e) => { e.stopPropagation(); toggleToolMenu(); });
+    $("#toolMenu").addEventListener("click", (e) => {
+      e.stopPropagation();
+      const b = e.target.closest("[data-tool]");
+      if (b) onToolClick(b.dataset.tool);
+    });
+    document.addEventListener("click", (e) => {
+      if (toolOpen && !e.target.closest("#dockRight")) toggleToolMenu(false);
+    });
+    document.body.classList.toggle("dark", darkOn);
+
+    // 日记：用 ?owner=1 在自己设备上解锁写入口，?owner=0 取消
+    const params = new URLSearchParams(location.search);
+    if (params.get("owner") === "1") lsSet(OWNER_KEY, "1");
+    if (params.get("owner") === "0") lsSet(OWNER_KEY, "0");
+    $("#view-diary").addEventListener("click", onDiaryPageClick);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") toggleToolMenu(false);
+    });
+    document.addEventListener("keydown", onDiaryPageKeydown);
+    loadDiary(function () { renderDiaryPage(); });
     document.addEventListener("click", (e) => {
       const c = e.target.closest("[data-copy]");
       if (c) copyVal(c.getAttribute("data-copy"));
@@ -549,19 +1145,20 @@
       if (ms) reactMascot(ms);
     });
     initTrail();
-    window.addEventListener("scroll", () =>
-      $("#fabTop").classList.toggle("show", window.scrollY > 320)
-    );
-    window.addEventListener("scroll", scrollBg, { passive: true });
-    scrollBg();
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
     window.addEventListener("resize", moveIndicator);
     window.addEventListener("hashchange", () => {
       const h = (location.hash || "").replace("#", "");
       if (VIEWS.some((v) => v.id === h) && h !== current) switchView(h, true);
     });
 
+    renderBocchiBackdrop();
+    startBackdropMotion();
     renderNotes();
     renderMascot();
+    renderGarden();
     renderFloatingWords();
     renderAll();
     const hash = (location.hash || "").replace("#", "");
@@ -574,6 +1171,7 @@
         splash.classList.add("hide");
         setTimeout(function () { splash.remove(); }, 800);
       }
+      setTimeout(function () { if (current === "home") launchFireworks(); }, 500);
     }, 900);
   }
 

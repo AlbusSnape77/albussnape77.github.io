@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Albus Snape</title>
+  <title>pphome</title>
   <meta name="description" content="Albus Snape's homepage — about me, my GitHub, and the tools I build." />
 
   <link rel="preconnect" href="https://fonts.loli.net" />
@@ -27,10 +27,10 @@
     <span class="cloud cloud-1"></span>
     <span class="cloud cloud-2"></span>
     <span class="cloud cloud-3"></span>
-    <span class="hill"></span>
   </div>
 
   <div class="notes" id="notes" aria-hidden="true"></div>
+  <div class="garden" id="garden" aria-hidden="true"></div>
   <div class="floating-words" id="floatingWords" aria-hidden="true"></div>
 
   <header class="topbar">
@@ -41,6 +41,7 @@
   <main id="main">
     <section class="view view-home is-active" id="view-home"></section>
     <section class="view view-software" id="view-software"></section>
+    <section class="view view-diary" id="view-diary"></section>
     <section class="view view-about" id="view-about"></section>
   </main>
 
@@ -65,7 +66,11 @@
     </span>
   </button>
 
-  <button class="fab fab-top" id="fabTop" type="button" aria-label="Back to top"></button>
+  <div class="dock-right" id="dockRight">
+    <div class="tool-menu" id="toolMenu" aria-hidden="true"></div>
+    <button class="fab fab-top" id="fabTop" type="button" aria-label="Back to top"></button>
+    <button class="fab tool-launcher" id="toolLauncher" type="button" aria-label="Tools" aria-expanded="false"></button>
+  </div>
 
   <script src="js/content.js"></script>
   <script src="js/app.js"></script>

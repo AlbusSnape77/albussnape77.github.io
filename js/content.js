@@ -1,18 +1,20 @@
 const CONTENT = {
   "site": {
-    "title": { "en": "Albus Snape", "zh": "追风君子", "ja": "Albus Snape" },
+    "title": { "en": "pphome", "zh": "pphome", "ja": "pphome" },
     "description": {
       "en": "Albus Snape's homepage — about me, my GitHub, and the tools I build.",
       "zh": "追风君子的主页 —— 关于我、我的 GitHub，以及我做的各种小工具。",
-      "ja": "Albus Snape のホームページ — 自己紹介、GitHub、自作ツールを紹介しています。"
+      "ja": "風を追う君子のホームページ — 自己紹介、GitHub、自作ツールを紹介しています。"
     },
+    "welcome": { "en": "Welcome", "zh": "欢迎", "ja": "ようこそ" },
+    "welcomeSub": { "en": "This is pphome", "zh": "这是 pphome", "ja": "これが pphome" },
     "mascotImage": "pics/bocchi2.webp",
     "heroImage": ""
   },
 
   "profile": {
     "greeting": { "en": "Hi, I'm", "zh": "你好，我是", "ja": "こんにちは、私は" },
-    "name": { "en": "Albus Snape", "zh": "追风君子", "ja": "Albus Snape" },
+    "name": { "en": "Albus Snape", "zh": "追风君子", "ja": "風を追う君子" },
     "tagline": {
       "en": "Developer · Indie Tool Maker · Gamer",
       "zh": "开发者 · 独立工具作者 · 玩家",
@@ -40,7 +42,7 @@ const CONTENT = {
         "我的项目大多始于「要是有个东西能干 X 就好了」，然后用业余时间把它做出来。下面这两个就是。"
       ],
       "ja": [
-        "こんにちは、Albus Snape です — 日々ぶつかる小さな面倒を、ちょっとした自作ツールに変えるのが好きです。",
+        "こんにちは、風を追う君子です — 日々ぶつかる小さな面倒を、ちょっとした自作ツールに変えるのが好きです。",
         "私のプロジェクトはたいてい「○○できたらいいのに」から始まり、週末に形にしたものです。下にその2つを紹介します。"
       ]
     },
@@ -102,6 +104,24 @@ const CONTENT = {
     "Skills": { "zh": "技能", "ja": "スキル" },
     "WeChat ": { "zh": "微信 ", "ja": "WeChat " },
     "Made with": { "zh": "用", "ja": "心を込めて" },
-    "Copied: ": { "zh": "已复制：", "ja": "コピーしました：" }
+    "Copied: ": { "zh": "已复制：", "ja": "コピーしました：" },
+    "Fireworks": { "zh": "烟火", "ja": "花火" },
+    "Whispers": { "zh": "碎碎念", "ja": "ひとりごと" },
+    "Sakura": { "zh": "樱花雨", "ja": "桜舞う" },
+    "Moonlight": { "zh": "月色", "ja": "月あかり" },
+    "Scroll down": { "zh": "向下滑动看看", "ja": "下にスクロール" },
+    "Diary": { "zh": "日记", "ja": "日記" },
+    "My diary": { "zh": "我的日记", "ja": "わたしの日記" },
+    "Little notes and everyday feelings.": { "zh": "一点日常和心情。", "ja": "日々のことと気持ち。" },
+    "Write something...": { "zh": "写点什么…", "ja": "なにか書く…" },
+    "Title (optional)": { "zh": "标题（可选）", "ja": "タイトル（任意）" },
+    "Save": { "zh": "保存", "ja": "保存" },
+    "Close": { "zh": "关闭", "ja": "閉じる" },
+    "Delete": { "zh": "删除", "ja": "削除" },
+    "Export diary file": { "zh": "导出日记文件", "ja": "日記を書き出す" },
+    "No entries yet.": { "zh": "还没有日记，来写第一篇吧～", "ja": "まだ日記がありません。" },
+    "Unpublished": { "zh": "未发布", "ja": "未公開" },
+    "Saved locally": { "zh": "已保存到本地", "ja": "ローカルに保存しました" },
+    "Diary file downloaded.": { "zh": "日记文件已导出。", "ja": "日記ファイルを書き出しました。" }
   }
 };
