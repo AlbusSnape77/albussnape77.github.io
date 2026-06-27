@@ -564,6 +564,9 @@ body.entered .hero .cta-row { animation-delay: 0.46s; }
   display: grid; grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr);
   gap: 24px; align-items: start;
 }
+.diary-page.is-readonly {
+  display: block; max-width: 640px; margin: 0 auto;
+}
 .diary-write, .diary-reading {
   min-width: 0;
 }

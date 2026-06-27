@@ -60,7 +60,7 @@
   let gardenOn = ls("pp_garden", "0") === "1";
   let darkOn = ls("pp_dark", "0") === "1";
   let toolOpen = false;
-  let diaryPublished = [], diaryLocal = [], diaryLoaded = false;
+  let diaryPublished = [], diaryLegacy = [], diaryLoaded = false, diarySaving = false;
   const motionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   const reduceMotion = () => motionQuery && motionQuery.matches;
 
@@ -155,23 +155,29 @@
     let cards = list
       .map((s) => {
         const tags = (s.tags || []).map((tg) => '<span class="tag">' + esc(tg) + "</span>").join("");
-        const dl = s.live
+        const primary = s.live
           ? '<a class="btn btn-primary" href="' + esc(s.live) + '" target="_blank" rel="noopener">' +
             icons.play + "<span>" + ui("Live demo", "在线体验") + "</span></a>"
-          : '<a class="btn btn-primary" href="' + esc(s.download || "#") + '"' + dlAttrs(s.download) + ">" +
-            icons.download + "<span>" + ui("Download", "下载") + "</span></a>";
-        const src = s.source
+          : s.download
+            ? '<a class="btn btn-primary" href="' + esc(s.download) + '"' + dlAttrs(s.download) + ">" +
+              icons.download + "<span>" + ui("Download", "下载") + "</span></a>"
+            : s.source
+              ? '<a class="btn btn-primary" href="' + esc(s.source) + '" target="_blank" rel="noopener">' +
+                icons.code + "<span>" + ui("Source code", "源码") + "</span></a>"
+              : "";
+        const src = s.source && (s.live || s.download)
           ? '<a class="btn icon-only" href="' + esc(s.source) +
             '" target="_blank" rel="noopener" aria-label="Source code" title="' +
             ui("Source code", "源码") + '">' + icons.code + "</a>"
           : "";
+        const actions = primary || src ? '<div class="card-actions">' + primary + src + "</div>" : "";
         return (
           '<article class="card reveal">' +
           '<div class="card-icon">' + renderIcon(s.icon) + "</div>" +
           "<h3>" + esc(t(s.name)) + "</h3>" +
           '<p class="desc">' + esc(t(s.desc)) + "</p>" +
           '<div class="tags">' + tags + "</div>" +
-          '<div class="card-actions">' + dl + src + "</div>" +
+          actions +
           "</article>"
         );
       })
@@ -183,7 +189,7 @@
         "</p>";
     v.innerHTML =
       '<div class="section-head"><h2>' + ui("Software", "软件作品") + "</h2><p>" +
-      ui("Tools and apps I've built — free to download.", "我做的各种工具和软件，欢迎下载使用。") +
+      ui("Tools, apps, and experiments I've built.", "我做过的一些工具、应用和小项目。") +
       "</p></div>" +
       '<div class="card-grid">' + cards + "</div>";
   }
@@ -945,31 +951,66 @@
 
   // ===== 日记 =====
   const DIARY_KEY = "pp_diary_local";
-  const OWNER_KEY = "pp_diary_owner";
-  function isOwner() { return ls(OWNER_KEY, "0") === "1"; }
-  function diaryPad(n) { return (n < 10 ? "0" : "") + n; }
+  const DIARY_HEADERS = { "Content-Type": "application/json", "X-Diary-Editor": "pphome-local" };
+  function isFilePreview() { return location.protocol === "file:"; }
+  function isLocalDiaryEditor() {
+    const h = location.hostname;
+    return location.protocol === "http:" && (h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "[::1]");
+  }
+  function normalizeDiaryList(d) {
+    return Array.isArray(d) ? d : (d && d.entries) || [];
+  }
+  function readOldLocalDrafts() {
+    try { return JSON.parse(ls(DIARY_KEY, "[]")) || []; } catch (e) { return []; }
+  }
+  function clearOldLocalDrafts() {
+    try { localStorage.removeItem(DIARY_KEY); } catch (e) {}
+  }
+  function importOldLocalDrafts(list) {
+    if (!isLocalDiaryEditor()) return Promise.resolve(list);
+    const ids = {};
+    list.forEach(function (e) { ids[String(e.id)] = true; });
+    const drafts = readOldLocalDrafts().filter(function (e) {
+      return e && e.text && !ids[String(e.id)];
+    });
+    if (!drafts.length) return Promise.resolve(list);
+    return fetch("api/diary/import", {
+      method: "POST",
+      headers: DIARY_HEADERS,
+      body: JSON.stringify({ entries: drafts }),
+    })
+      .then(function (r) { return r.ok ? r.json() : list; })
+      .then(function (d) { clearOldLocalDrafts(); return normalizeDiaryList(d); })
+      .catch(function () { return list; });
+  }
   function loadDiary(cb) {
-    try { diaryLocal = JSON.parse(ls(DIARY_KEY, "[]")) || []; } catch (e) { diaryLocal = []; }
-    fetch("diary.json", { cache: "no-store" })
+    diaryLegacy = isFilePreview() ? readOldLocalDrafts() : [];
+    fetch(isLocalDiaryEditor() ? "api/diary" : "diary.json", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : []))
-      .then((d) => { diaryPublished = Array.isArray(d) ? d : (d && d.entries) || []; diaryLoaded = true; cb && cb(); })
+      .then(normalizeDiaryList)
+      .then(importOldLocalDrafts)
+      .then((d) => { diaryPublished = d; diaryLoaded = true; cb && cb(); })
       .catch(() => { diaryPublished = []; diaryLoaded = true; cb && cb(); });
   }
   function diaryAll() {
     const map = {};
-    diaryPublished.forEach((e) => { map[e.id] = { id: e.id, date: e.date, title: e.title, text: e.text, _pub: true }; });
-    diaryLocal.forEach((e) => { if (!map[e.id]) map[e.id] = { id: e.id, date: e.date, title: e.title, text: e.text, _pub: false }; });
+    const editable = isLocalDiaryEditor();
+    diaryPublished.forEach((e) => { map[e.id] = { id: e.id, date: e.date, title: e.title, text: e.text, _editable: editable }; });
+    if (isFilePreview()) {
+      diaryLegacy.forEach((e) => {
+        if (!map[e.id]) map[e.id] = { id: e.id, date: e.date, title: e.title, text: e.text, _editable: false };
+      });
+    }
     return Object.keys(map).map((k) => map[k]).sort((a, b) => b.id - a.id);
   }
   function diaryEntryHtml(e) {
-    const badge = e._pub ? "" : '<span class="d-badge">' + ui("Unpublished") + "</span>";
     const title = e.title ? '<div class="d-title">' + esc(e.title) + "</div>" : "";
-    const del = !e._pub
+    const del = e._editable
       ? '<button class="d-del" type="button" data-del="' + esc(e.id) + '">' + ui("Delete") + "</button>"
       : "";
     return (
       '<article class="diary-entry"><div class="d-meta"><span class="d-date">' + esc(e.date || "") + "</span>" +
-      badge + del + "</div>" + title + '<div class="d-text">' + esc(e.text || "") + "</div></article>"
+      del + "</div>" + title + '<div class="d-text">' + esc(e.text || "") + "</div></article>"
     );
   }
   function diaryEditorHtml() {
@@ -979,12 +1020,12 @@
         '<textarea id="diaryText" placeholder="' + ui("Write something...") + '"></textarea>' +
         '<div class="diary-actions">' +
           '<button class="btn btn-primary" type="button" id="diarySave">' + ui("Save") + "</button>" +
-          '<button class="btn" type="button" id="diaryExport">' + ui("Export diary file") + "</button>" +
         "</div>" +
       "</div>"
     );
   }
   function diaryPageHtml() {
+    const canEdit = isLocalDiaryEditor();
     const list = diaryAll();
     const items = list.length
       ? list.map(diaryEntryHtml).join("")
@@ -992,8 +1033,8 @@
     return (
       '<div class="section-head"><h2>' + ui("My diary") + "</h2><p>" +
       ui("Little notes and everyday feelings.") + "</p></div>" +
-      '<div class="diary-page">' +
-        '<section class="diary-write reveal in">' + diaryEditorHtml() + "</section>" +
+      '<div class="diary-page' + (canEdit ? "" : " is-readonly") + '">' +
+        (canEdit ? '<section class="diary-write reveal in">' + diaryEditorHtml() + "</section>" : "") +
         '<section class="diary-reading reveal in">' +
           '<div class="diary-list">' + items + "</div>" +
         "</section>" +
@@ -1015,7 +1056,7 @@
     panel.innerHTML =
       '<div class="diary-head"><h2>' + ui("My diary") + "</h2>" +
         '<button class="diary-x" type="button" data-diary-close aria-label="' + ui("Close") + '">✕</button></div>' +
-      (isOwner() ? diaryEditorHtml() : "") +
+      (isLocalDiaryEditor() ? diaryEditorHtml() : "") +
       '<div class="diary-list">' + items + "</div>";
   }
   function openDiary() {
@@ -1035,50 +1076,64 @@
     document.body.style.overflow = "";
   }
   function diarySave() {
+    if (!isLocalDiaryEditor() || diarySaving) return;
     const ta = $("#diaryText"), ti = $("#diaryTitle");
     if (!ta) return;
     const text = ta.value.trim();
     if (!text) { ta.focus(); return; }
-    const now = new Date();
-    diaryLocal.unshift({
-      id: Date.now(),
-      date: now.getFullYear() + "-" + diaryPad(now.getMonth() + 1) + "-" + diaryPad(now.getDate()),
-      title: (ti && ti.value.trim()) || "",
-      text: text,
-    });
-    lsSet(DIARY_KEY, JSON.stringify(diaryLocal));
-    toast(ui("Saved locally"));
-    renderDiary();
-    renderDiaryPage();
+    diarySaving = true;
+    document.querySelectorAll("#diarySave").forEach(function (b) { b.disabled = true; });
+    fetch("api/diary", {
+      method: "POST",
+      headers: DIARY_HEADERS,
+      body: JSON.stringify({ title: (ti && ti.value.trim()) || "", text: text }),
+    })
+      .then(function (r) {
+        if (r.ok) return r.json();
+        return r.json().then(function (d) { throw new Error(d.error || "Save failed."); });
+      })
+      .then(function (d) {
+        diaryPublished = normalizeDiaryList(d);
+        diaryLoaded = true;
+        if (ti) ti.value = "";
+        ta.value = "";
+        toast(ui("Saved to diary file"));
+        renderDiary();
+        renderDiaryPage();
+      })
+      .catch(function () { toast(ui("Could not save diary.")); })
+      .finally(function () {
+        diarySaving = false;
+        document.querySelectorAll("#diarySave").forEach(function (b) { b.disabled = false; });
+      });
   }
   function diaryDelete(id) {
-    diaryLocal = diaryLocal.filter(function (e) { return String(e.id) !== String(id); });
-    lsSet(DIARY_KEY, JSON.stringify(diaryLocal));
-    renderDiary();
-    renderDiaryPage();
-  }
-  function diaryExport() {
-    const list = diaryAll().map(function (e) {
-      return { id: e.id, date: e.date, title: e.title || "", text: e.text || "" };
-    });
-    const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = el("a");
-    a.href = url; a.download = "diary.json";
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    toast(ui("Diary file downloaded."));
+    if (!isLocalDiaryEditor()) return;
+    fetch("api/diary/" + encodeURIComponent(id), {
+      method: "DELETE",
+      headers: DIARY_HEADERS,
+    })
+      .then(function (r) {
+        if (r.ok) return r.json();
+        return r.json().then(function (d) { throw new Error(d.error || "Delete failed."); });
+      })
+      .then(function (d) {
+        diaryPublished = normalizeDiaryList(d);
+        diaryLoaded = true;
+        toast(ui("Deleted from diary file"));
+        renderDiary();
+        renderDiaryPage();
+      })
+      .catch(function () { toast(ui("Could not delete diary.")); });
   }
   function onDiaryModalClick(e) {
     if (e.target.closest("[data-diary-close]") || e.target.classList.contains("diary-backdrop")) { closeDiary(); return; }
     if (e.target.closest("#diarySave")) { diarySave(); return; }
-    if (e.target.closest("#diaryExport")) { diaryExport(); return; }
     const del = e.target.closest("[data-del]");
     if (del) diaryDelete(del.getAttribute("data-del"));
   }
   function onDiaryPageClick(e) {
     if (e.target.closest("#diarySave")) { diarySave(); return; }
-    if (e.target.closest("#diaryExport")) { diaryExport(); return; }
     const del = e.target.closest("[data-del]");
     if (del) diaryDelete(del.getAttribute("data-del"));
   }
@@ -1125,10 +1180,6 @@
     });
     document.body.classList.toggle("dark", darkOn);
 
-    // 日记：用 ?owner=1 在自己设备上解锁写入口，?owner=0 取消
-    const params = new URLSearchParams(location.search);
-    if (params.get("owner") === "1") lsSet(OWNER_KEY, "1");
-    if (params.get("owner") === "0") lsSet(OWNER_KEY, "0");
     $("#view-diary").addEventListener("click", onDiaryPageClick);
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") toggleToolMenu(false);

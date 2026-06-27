@@ -88,6 +88,18 @@ const CONTENT = {
       "tags": ["Web", "Webcam", "Gesture"],
       "download": "https://github.com/AlbusSnape77/gesture-beauty-cam/archive/refs/heads/main.zip",
       "source": "https://github.com/AlbusSnape77/gesture-beauty-cam"
+    },
+    {
+      "name": { "en": "Sanpingfang Milk Tea Mini Program", "zh": "三平方奶茶店小程序", "ja": "三平方ミルクティー小程序" },
+      "desc": {
+        "en": "A WeChat Mini Program for a milk tea shop, with product browsing, custom drinks, cart, orders, user center, and admin operations.",
+        "zh": "一款奶茶店微信小程序，支持商品浏览、自定义规格、购物车、订单管理、用户中心和管理员后台运营。",
+        "ja": "ミルクティー店向けのWeChatミニプログラム。商品閲覧、カスタム注文、カート、注文管理、ユーザーセンター、管理画面に対応。"
+      },
+      "icon": "🧋",
+      "tags": ["WeChat", "Mini Program", "Cloud", "ECharts"],
+      "download": "https://github.com/AlbusSnape77/Sanpingfang-Milk-Tea-Miniprogram/archive/refs/tags/v1.0.0.zip",
+      "source": "https://github.com/AlbusSnape77/Sanpingfang-Milk-Tea-Miniprogram"
     }
   ],
 
@@ -98,7 +110,7 @@ const CONTENT = {
     "Source code": { "zh": "源码", "ja": "ソースコード" },
     "Nothing here yet.": { "zh": "暂时还没有内容。", "ja": "まだ何もありません。" },
     "Software": { "zh": "软件作品", "ja": "ソフトウェア" },
-    "Tools and apps I've built — free to download.": { "zh": "我做的各种工具和软件，欢迎下载使用。", "ja": "私が作ったツールやアプリ — 無料でダウンロードできます。" },
+    "Tools, apps, and experiments I've built.": { "zh": "我做过的一些工具、应用和小项目。", "ja": "私が作ったツール、アプリ、小さな実験です。" },
     "About me": { "zh": "关于我", "ja": "私について" },
     "Who I am": { "zh": "我是谁", "ja": "自己紹介" },
     "Skills": { "zh": "技能", "ja": "スキル" },
@@ -118,10 +130,10 @@ const CONTENT = {
     "Save": { "zh": "保存", "ja": "保存" },
     "Close": { "zh": "关闭", "ja": "閉じる" },
     "Delete": { "zh": "删除", "ja": "削除" },
-    "Export diary file": { "zh": "导出日记文件", "ja": "日記を書き出す" },
     "No entries yet.": { "zh": "还没有日记，来写第一篇吧～", "ja": "まだ日記がありません。" },
-    "Unpublished": { "zh": "未发布", "ja": "未公開" },
-    "Saved locally": { "zh": "已保存到本地", "ja": "ローカルに保存しました" },
-    "Diary file downloaded.": { "zh": "日记文件已导出。", "ja": "日記ファイルを書き出しました。" }
+    "Saved to diary file": { "zh": "已写入日记文件", "ja": "日記ファイルに保存しました" },
+    "Could not save diary.": { "zh": "保存失败，请确认本地服务正在运行。", "ja": "保存できませんでした。" },
+    "Deleted from diary file": { "zh": "已从日记文件删除", "ja": "日記ファイルから削除しました" },
+    "Could not delete diary.": { "zh": "删除失败，请确认本地服务正在运行。", "ja": "削除できませんでした。" }
   }
 };
