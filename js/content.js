@@ -73,6 +73,7 @@ const CONTENT = {
         "ja": "Delta Force のリザルト画面を OCR で読み取り、対戦成績を見やすいダッシュボードにまとめる Windows デスクトップツールです。"
       },
       "icon": "🎯",
+      "preview": "pics/software/delta-force-preview.webp",
       "tags": ["Delta Force", "v1.7", "OCR", "Free"],
       "download": "https://github.com/AlbusSnape77/Delta-Force-Stats/releases/download/v1.7/-v1.7.zip",
       "source": "https://github.com/AlbusSnape77/Delta-Force-Stats"
@@ -85,6 +86,7 @@ const CONTENT = {
         "ja": "ブラウザのウェブカメラおもちゃ：小顔・デカ目・ソフトフィルターをリアルタイムで、しかもすべて手のジェスチャーで操作できます。"
       },
       "icon": "📷",
+      "preview": "pics/software/gesture-cam-preview.webp",
       "tags": ["Web", "Webcam", "Gesture"],
       "download": "https://github.com/AlbusSnape77/gesture-beauty-cam/archive/refs/heads/main.zip",
       "source": "https://github.com/AlbusSnape77/gesture-beauty-cam"
@@ -97,6 +99,7 @@ const CONTENT = {
         "ja": "ミルクティー店向けのWeChatミニプログラム。商品閲覧、カスタム注文、カート、注文管理、ユーザーセンター、管理画面に対応。"
       },
       "icon": "🧋",
+      "preview": "pics/software/miniprogram-preview.webp",
       "tags": ["WeChat", "Mini Program", "Cloud", "ECharts"],
       "download": "https://github.com/AlbusSnape77/Sanpingfang-Milk-Tea-Miniprogram/archive/refs/tags/v1.0.0.zip",
       "source": "https://github.com/AlbusSnape77/Sanpingfang-Milk-Tea-Miniprogram"

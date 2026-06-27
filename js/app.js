@@ -154,7 +154,14 @@
     const list = CONTENT.software || [];
     let cards = list
       .map((s) => {
+        const title = esc(t(s.name));
         const tags = (s.tags || []).map((tg) => '<span class="tag">' + esc(tg) + "</span>").join("");
+        const preview = s.preview
+          ? '<button class="software-preview" type="button" data-preview="' + esc(s.preview) +
+            '" data-preview-title="' + title + '" aria-label="Preview ' + title + '">' +
+            '<img src="' + esc(s.preview) + '" alt="' + title + ' preview" loading="lazy" />' +
+            "</button>"
+          : "";
         const primary = s.live
           ? '<a class="btn btn-primary" href="' + esc(s.live) + '" target="_blank" rel="noopener">' +
             icons.play + "<span>" + ui("Live demo", "在线体验") + "</span></a>"
@@ -173,8 +180,9 @@
         const actions = primary || src ? '<div class="card-actions">' + primary + src + "</div>" : "";
         return (
           '<article class="card reveal">' +
+          preview +
           '<div class="card-icon">' + renderIcon(s.icon) + "</div>" +
-          "<h3>" + esc(t(s.name)) + "</h3>" +
+          "<h3>" + title + "</h3>" +
           '<p class="desc">' + esc(t(s.desc)) + "</p>" +
           '<div class="tags">' + tags + "</div>" +
           actions +
@@ -191,7 +199,40 @@
       '<div class="section-head"><h2>' + ui("Software", "软件作品") + "</h2><p>" +
       ui("Tools, apps, and experiments I've built.", "我做过的一些工具、应用和小项目。") +
       "</p></div>" +
-      '<div class="card-grid">' + cards + "</div>";
+      '<div class="card-grid">' + cards + "</div>" +
+      '<div class="preview-lightbox" id="softwarePreview" aria-hidden="true">' +
+        '<button class="preview-backdrop" type="button" data-preview-close aria-label="Close"></button>' +
+        '<div class="preview-panel" role="dialog" aria-modal="true">' +
+          '<button class="preview-close" type="button" data-preview-close aria-label="Close">×</button>' +
+          '<img class="preview-image" alt="" />' +
+        "</div>" +
+      "</div>";
+  }
+
+  function openSoftwarePreview(btn) {
+    const modal = $("#softwarePreview");
+    if (!modal) return;
+    const img = modal.querySelector(".preview-image");
+    if (!img) return;
+    img.src = btn.getAttribute("data-preview") || "";
+    img.alt = btn.getAttribute("data-preview-title") || "";
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("preview-open");
+  }
+  function closeSoftwarePreview() {
+    const modal = $("#softwarePreview");
+    if (!modal || !modal.classList.contains("open")) return;
+    const img = modal.querySelector(".preview-image");
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("preview-open");
+    if (img) img.removeAttribute("src");
+  }
+  function onSoftwarePreviewClick(e) {
+    const preview = e.target.closest("[data-preview]");
+    if (preview) { openSoftwarePreview(preview); return; }
+    if (e.target.closest("[data-preview-close]")) closeSoftwarePreview();
   }
 
   function avatarInner(p) {
@@ -1181,8 +1222,12 @@
     document.body.classList.toggle("dark", darkOn);
 
     $("#view-diary").addEventListener("click", onDiaryPageClick);
+    $("#view-software").addEventListener("click", onSoftwarePreviewClick);
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") toggleToolMenu(false);
+      if (e.key === "Escape") {
+        toggleToolMenu(false);
+        closeSoftwarePreview();
+      }
     });
     document.addEventListener("keydown", onDiaryPageKeydown);
     loadDiary(function () { renderDiaryPage(); });

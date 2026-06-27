@@ -24,3 +24,15 @@ test("software list includes the milk tea mini program", () => {
   );
   assert.equal(item.source, "https://github.com/AlbusSnape77/Sanpingfang-Milk-Tea-Miniprogram");
 });
+
+test("each software item has a local preview image", () => {
+  const content = loadContent();
+
+  content.software.forEach((item) => {
+    assert.ok(item.preview, `${item.name.en} is missing preview`);
+    assert.match(item.preview, /^pics\/software\/.+\.webp$/, `${item.name.en} preview should be a webp under pics/software`);
+
+    const file = path.join(__dirname, "..", item.preview);
+    assert.ok(fs.existsSync(file), `${item.name.en} preview file does not exist: ${item.preview}`);
+  });
+});
